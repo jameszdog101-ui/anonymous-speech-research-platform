@@ -77,5 +77,5 @@ wrangler.toml            Cloudflare bindings template
 
 ## MVP boundaries
 
-This version does not include the researcher dashboard, authentication, exports, production consent wording, retention/deletion policy, or final voice de-identification validation. See `AGENTS.md` for confirmed decisions and unresolved items.
+This version includes a first researcher-portal MVP for submission review, transformed-audio playback/download, eligibility review, CSV export, and audit logging. Production access must be protected by Cloudflare Access and an explicit researcher allowlist. Production consent wording, the retention/deletion policy, final voice de-identification validation, and live Cloudflare resources are still pending. See `AGENTS.md` and the deployment plan in `docs/` for confirmed decisions and unresolved items.
 
