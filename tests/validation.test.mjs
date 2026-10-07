@@ -242,10 +242,11 @@ test("study collection has a server-enforced cap and manual control", async () =
   assert.match(client, /api\/study-status/);
 });
 
-test("researcher UI is deployed with the Worker while admin APIs run through authentication", async () => {
-  const config = await readFile(new URL("../wrangler.toml", import.meta.url), "utf8");
-  assert.match(config, /\[assets\][\s\S]*directory = "\.\/public"/);
-  assert.match(config, /run_worker_first = \["\/api\/\*", "\/admin\/api\/\*"\]/);
+test("researcher portal deploys separately from the public participant API", async () => {
+  const config = await readFile(new URL("../wrangler.admin.toml", import.meta.url), "utf8");
+  assert.match(config, /name = "anonymous-speech-platform-admin"/);
+  assert.match(config, /ADMIN_API_ENABLED = "true"/);
+  assert.match(config, /run_worker_first = \["\/admin\/api\/\*"\]/);
   assert.doesNotMatch(config, /PROJECT_OWNER_EMAIL|jameszdog101@gmail\.com/);
 });
 
