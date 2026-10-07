@@ -32,6 +32,7 @@ Keep the test version short. The exact number of tasks and exact recording durat
 The MVP may collect only these background fields:
 
 - `age_group`
+- `biological_sex` (`male` or `female`; used only to select the transform sub-profile)
 - `nationality`
 - `language_background`
 - `first_language`
@@ -73,7 +74,9 @@ The initial screen provides a platform-language choice through Google Translate.
 
 ## Voice transformation and privacy rule
 
-Use one fixed transformation profile for the MVP, named `PROFILE_A` unless the user later changes the name. A fixed profile means every participant recording is processed with the same versioned pitch/formant transformation settings. Participants cannot tune or select those settings.
+Use the fixed versioned `PROFILE_A v2` algorithm with two user-selected biological-sex sub-profiles. `PROFILE_A_M` applies the male-path parameters and `PROFILE_A_F` applies the female-path parameters. Participants cannot tune or select parameters beyond the required `biological_sex` background field. Do not infer sex from the recording.
+
+The v2 test profiles perform duration-preserving pitch shift, formant-band reshaping, deterministic micro-modulation, mono downmixing, band limiting, soft limiting, and RMS normalization in a module Web Worker. Male uses approximately +4 semitones and a 1.18 formant scale; female uses approximately -4 semitones and a 0.84 formant scale. These are test defaults, not validated production anonymization guarantees.
 
 The transformation configuration must be versioned so a submitted record can identify the exact processing version used.
 
@@ -111,7 +114,7 @@ Logical request mapping:
 Participant browser
   -> Cloudflare Pages participant UI
   -> local microphone capture
-  -> local PROFILE_A transformation
+  -> local PROFILE_A v2 transformation
   -> Worker API
        -> D1 metadata
        -> R2 transformed audio

@@ -5,10 +5,10 @@ import { fileURLToPath } from "node:url";
 import {
   MAX_AUDIO_BYTES,
   TASK_IDS,
-  TRANSFORM_PROFILE,
-  TRANSFORM_VERSION,
+  TRANSFORM_PARAMETER_SETS,
   hasWavHeader,
   isUuid,
+  transformProfileForSex,
   validateAudioRequest,
   validateSubmissionPayload
 } from "../worker/src/validation.js";
@@ -112,6 +112,11 @@ async function handleApi(request, response, pathname) {
     const submission = store.submissions[submissionId];
     if (!submission) return sendJson(response, 404, { error: "找不到匿名提交。" }), true;
     if (submission.status !== "in_progress") return sendJson(response, 409, { error: "此提交已完成。" }), true;
+    const transformProfile = request.headers["x-transform-profile"];
+    const transformVersion = request.headers["x-transform-version"];
+    if (transformProfile !== transformProfileForSex(submission.profile.biological_sex)) {
+      return sendJson(response, 400, { error: "聲音轉換設定與背景資料不一致。" }), true;
+    }
     try {
       const audio = await readBody(request, MAX_AUDIO_BYTES);
       if (audio.length === 0) return sendJson(response, 400, { error: "音檔不可為空。" }), true;
@@ -121,8 +126,9 @@ async function handleApi(request, response, pathname) {
       submission.recordings[taskId] = {
         file: filename,
         audio_bytes: audio.length,
-        transform_profile: TRANSFORM_PROFILE,
-        transform_version: TRANSFORM_VERSION,
+        transform_profile: transformProfile,
+        transform_version: transformVersion,
+        transform_parameters: TRANSFORM_PARAMETER_SETS[transformProfile],
         uploaded_at: new Date().toISOString()
       };
       await saveStore(store);

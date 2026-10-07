@@ -8,7 +8,7 @@ Raw microphone recordings stay in browser memory. Only a locally transformed `au
 
 The completion page does not expose the internal submission UUID. Its downloadable PNG proof is generated locally and contains no UUID, timestamp, participant profile, or response data, preventing a returned proof from directly identifying the corresponding research record.
 
-`PROFILE_A` is a test profile, not a guarantee of irreversible anonymity. Its production algorithm and parameters require research and ethics review.
+`PROFILE_A v2` has two fixed sub-profiles selected from the participant's `biological_sex` field: `PROFILE_A_M` and `PROFILE_A_F`. Processing runs in a browser Worker and combines duration-preserving pitch shift, formant-band reshaping, deterministic micro-modulation, mono downmixing, band limiting, soft limiting, and RMS normalization. It reduces voice similarity but is not a guarantee of irreversible anonymity; production parameters require speaker-recognition, intelligibility, research-validity, and ethics review.
 
 ## Run locally
 

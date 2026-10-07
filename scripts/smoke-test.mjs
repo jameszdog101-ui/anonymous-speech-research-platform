@@ -20,9 +20,10 @@ const created = await json(await fetch(`${baseUrl}/api/submissions`, {
   body: JSON.stringify({
     consent: true,
     study_id: "speech-pilot-001",
-    study_version: "0.2.0",
+    study_version: "0.3.0",
     profile: {
       age_group: "18_24",
+      biological_sex: "male",
       nationality: "Taiwan",
       language_background: "bilingual",
       first_language: "Mandarin",
@@ -39,14 +40,28 @@ const rawAttempt = await fetch(`${baseUrl}/api/submissions/${created.submission_
 });
 if (rawAttempt.status !== 400) throw new Error(`Raw audio was not rejected: ${rawAttempt.status}`);
 
+const mismatchedProfileAttempt = await fetch(`${baseUrl}/api/submissions/${created.submission_id}/tasks/task_001/audio`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "audio/wav",
+    "X-Audio-State": "transformed",
+    "X-Transform-Profile": "PROFILE_A_F",
+    "X-Transform-Version": "2.0.0"
+  },
+  body: wav
+});
+if (mismatchedProfileAttempt.status !== 400) {
+  throw new Error(`Sex/profile mismatch was not rejected: ${mismatchedProfileAttempt.status}`);
+}
+
 for (const taskId of ["task_001", "task_002"]) {
   await json(await fetch(`${baseUrl}/api/submissions/${created.submission_id}/tasks/${taskId}/audio`, {
     method: "PUT",
     headers: {
       "Content-Type": "audio/wav",
       "X-Audio-State": "transformed",
-      "X-Transform-Profile": "PROFILE_A",
-      "X-Transform-Version": "1.0.0"
+      "X-Transform-Profile": "PROFILE_A_M",
+      "X-Transform-Version": "2.0.0"
     },
     body: wav
   }));

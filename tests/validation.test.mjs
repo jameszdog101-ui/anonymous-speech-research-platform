@@ -3,15 +3,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { STUDY_CONFIG } from "../public/study-config.js";
 import {
-  TRANSFORM_PROFILE,
-  TRANSFORM_VERSION,
+  TRANSFORM_PROFILES,
+  TRANSFORM_PARAMETER_SETS,
   hasWavHeader,
+  transformProfileForSex,
   validateAudioRequest,
   validateSubmissionPayload
 } from "../worker/src/validation.js";
 
 const validProfile = {
   age_group: "18_24",
+  biological_sex: "male",
   nationality: "日本",
   language_background: "bilingual",
   first_language: "中文（普通話）",
@@ -47,8 +49,8 @@ test("accepts only the versioned transformed WAV contract", () => {
   const request = audioRequest({
     "Content-Type": "audio/wav",
     "X-Audio-State": "transformed",
-    "X-Transform-Profile": TRANSFORM_PROFILE,
-    "X-Transform-Version": TRANSFORM_VERSION,
+    "X-Transform-Profile": "PROFILE_A_M",
+    "X-Transform-Version": TRANSFORM_PROFILES.PROFILE_A_M,
     "Content-Length": "1024"
   });
   assert.equal(validateAudioRequest(request, "task_001"), null);
@@ -61,6 +63,14 @@ test("study playback policies cannot contradict each other", () => {
     assert.equal(task.max_playbacks, 2, task.task_id);
     assert.equal(task.max_recordings, 2, task.task_id);
   }
+});
+
+test("biological sex maps to one fixed v2 transform profile", () => {
+  assert.equal(transformProfileForSex("male"), "PROFILE_A_M");
+  assert.equal(transformProfileForSex("female"), "PROFILE_A_F");
+  assert.equal(transformProfileForSex("unknown"), null);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_M.pitchSemitones, 4);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.pitchSemitones, -4);
 });
 
 test("monolingual profiles may omit L2 but bilingual profiles may not", () => {

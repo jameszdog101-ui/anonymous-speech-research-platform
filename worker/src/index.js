@@ -1,10 +1,10 @@
 import {
   MAX_AUDIO_BYTES,
   TASK_IDS,
-  TRANSFORM_PROFILE,
-  TRANSFORM_VERSION,
+  TRANSFORM_PARAMETER_SETS,
   hasWavHeader,
   isUuid,
+  transformProfileForSex,
   validateAudioRequest,
   validateSubmissionPayload
 } from "./validation.js";
@@ -51,14 +51,15 @@ async function createSubmission(request, env) {
   const profile = payload.profile;
   await env.DB.prepare(`
     INSERT INTO submissions (
-      id, study_id, study_version, status, age_group, nationality, language_background,
+      id, study_id, study_version, status, age_group, biological_sex, nationality, language_background,
       first_language, second_languages_json, mandarin_learning_years, created_at
-    ) VALUES (?, ?, ?, 'in_progress', ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, 'in_progress', ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     payload.study_id,
     payload.study_version,
     profile.age_group,
+    profile.biological_sex,
     profile.nationality.trim(),
     profile.language_background,
     profile.first_language.trim(),
@@ -73,9 +74,14 @@ async function uploadAudio(request, env, submissionId, taskId) {
   if (!isUuid(submissionId)) return json({ error: "匿名提交編號格式不正確。" }, 400);
   const validationError = validateAudioRequest(request, taskId);
   if (validationError) return json({ error: validationError }, 400);
-  const submission = await env.DB.prepare("SELECT status FROM submissions WHERE id = ?").bind(submissionId).first();
+  const submission = await env.DB.prepare("SELECT status, biological_sex FROM submissions WHERE id = ?").bind(submissionId).first();
   if (!submission) return json({ error: "找不到匿名提交。" }, 404);
   if (submission.status !== "in_progress") return json({ error: "此提交已完成，不能再寫入音訊。" }, 409);
+  const transformProfile = request.headers.get("X-Transform-Profile");
+  const transformVersion = request.headers.get("X-Transform-Version");
+  if (transformProfile !== transformProfileForSex(submission.biological_sex)) {
+    return json({ error: "聲音轉換設定與背景資料不一致。" }, 400);
+  }
 
   const audio = await request.arrayBuffer();
   if (audio.byteLength === 0 || audio.byteLength > MAX_AUDIO_BYTES) return json({ error: "音檔為空或超過大小限制。" }, 400);
@@ -83,18 +89,28 @@ async function uploadAudio(request, env, submissionId, taskId) {
   const objectKey = `submissions/${submissionId}/${taskId}.wav`;
   await env.AUDIO.put(objectKey, audio, {
     httpMetadata: { contentType: "audio/wav" },
-    customMetadata: { taskId, transformProfile: TRANSFORM_PROFILE, transformVersion: TRANSFORM_VERSION }
+    customMetadata: { taskId, transformProfile, transformVersion }
   });
   await env.DB.prepare(`
-    INSERT INTO task_recordings (submission_id, task_id, object_key, audio_bytes, transform_profile, transform_version, uploaded_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO task_recordings (submission_id, task_id, object_key, audio_bytes, transform_profile, transform_version, transform_parameters_json, uploaded_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(submission_id, task_id) DO UPDATE SET
       object_key = excluded.object_key,
       audio_bytes = excluded.audio_bytes,
       transform_profile = excluded.transform_profile,
       transform_version = excluded.transform_version,
+      transform_parameters_json = excluded.transform_parameters_json,
       uploaded_at = excluded.uploaded_at
-  `).bind(submissionId, taskId, objectKey, audio.byteLength, TRANSFORM_PROFILE, TRANSFORM_VERSION, new Date().toISOString()).run();
+  `).bind(
+    submissionId,
+    taskId,
+    objectKey,
+    audio.byteLength,
+    transformProfile,
+    transformVersion,
+    JSON.stringify(TRANSFORM_PARAMETER_SETS[transformProfile]),
+    new Date().toISOString()
+  ).run();
   return json({ ok: true, task_id: taskId });
 }
 

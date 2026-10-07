@@ -50,6 +50,11 @@ function formatTime(seconds) {
   return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
 }
 function currentTask() { return STUDY_CONFIG.tasks[state.taskIndex]; }
+function activeTransformProfile() {
+  const profile = STUDY_CONFIG.transformProfiles[state.profile?.biological_sex];
+  if (!profile) throw new Error("找不到適用的聲音去識別化設定。");
+  return profile;
+}
 function validateTaskConfiguration(task) {
   if (task.play_once === task.replay_allowed) throw new Error(`題目 ${task.task_id} 的播放規則互相矛盾。`);
   if (task.max_playbacks !== 2 || task.max_recordings !== 2) throw new Error(`題目 ${task.task_id} 必須設定為播放及錄音各兩次。`);
@@ -174,7 +179,7 @@ async function finishRecording() {
   elements.recordLabel.textContent = "錄音完成";
   elements.recordHelp.textContent = "正在準備去識別化預覽";
   try {
-    const transformedBlob = await transformRecording(rawBlob, STUDY_CONFIG.transformProfile);
+    const transformedBlob = await transformRecording(rawBlob, activeTransformProfile());
     state.processedAudio.set(currentTask().task_id, transformedBlob);
     showProcessedPreview(transformedBlob);
   } catch (error) {
@@ -191,7 +196,7 @@ async function saveCurrentTask() {
   elements.taskNext.disabled = true;
   elements.taskNext.textContent = "正在安全上傳…";
   try {
-    await uploadTransformedAudio(state.submissionId, task, audio, STUDY_CONFIG.transformProfile);
+    await uploadTransformedAudio(state.submissionId, task, audio, activeTransformProfile());
     if (state.taskIndex < STUDY_CONFIG.tasks.length - 1) { state.taskIndex += 1; renderTask(); }
     else {
       await finalizeSubmission(state.submissionId);
@@ -370,7 +375,7 @@ elements.profileNext.addEventListener("click", () => {
     return;
   }
   state.profile = {
-    age_group: data.get("age_group"), nationality: data.get("nationality").trim(), language_background: data.get("language_background"),
+    age_group: data.get("age_group"), biological_sex: data.get("biological_sex"), nationality: data.get("nationality").trim(), language_background: data.get("language_background"),
     first_language: data.get("first_language").trim(), second_languages: secondLanguages,
     mandarin_learning_years: Number(data.get("mandarin_learning_years"))
   };

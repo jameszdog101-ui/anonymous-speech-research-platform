@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   study_version TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('in_progress', 'completed')),
   age_group TEXT NOT NULL,
+  biological_sex TEXT NOT NULL CHECK (biological_sex IN ('male', 'female')),
   nationality TEXT NOT NULL,
   language_background TEXT NOT NULL,
   first_language TEXT NOT NULL,
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS task_recordings (
   audio_bytes INTEGER NOT NULL,
   transform_profile TEXT NOT NULL,
   transform_version TEXT NOT NULL,
+  transform_parameters_json TEXT NOT NULL,
   uploaded_at TEXT NOT NULL,
   PRIMARY KEY (submission_id, task_id),
   FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE

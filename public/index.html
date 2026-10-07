@@ -121,6 +121,15 @@
               </select>
             </label>
             <label>
+              <span>生理性別</span>
+              <select name="biological_sex" required>
+                <option value="">請選擇</option>
+                <option value="male">生理男</option>
+                <option value="female">生理女</option>
+              </select>
+              <small class="field-help">此欄位只用於選擇固定的聲音去識別化效果。</small>
+            </label>
+            <label>
               <span>國籍</span>
               <input name="nationality" maxlength="60" placeholder="例如：日本" autocomplete="country-name" required>
               <small class="field-help">請填國家或地區名稱，不需填居住地址。</small>
@@ -271,7 +280,7 @@
 
     <footer>
       <span>Zero-Cost Automated Speech Research Platform</span>
-      <span>PROFILE_A · 測試版</span>
+      <span>PROFILE_A v2 · 測試版</span>
     </footer>
 
     <script>

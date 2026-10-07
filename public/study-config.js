@@ -1,17 +1,36 @@
 export const STUDY_CONFIG = Object.freeze({
   studyId: "speech-pilot-001",
-  version: "0.2.0",
+  version: "0.3.0",
   maxRecordingSeconds: 30,
-  transformProfile: Object.freeze({
-    id: "PROFILE_A",
-    version: "1.0.0",
-    playbackRate: 0.92,
-    highpassHz: 110,
-    formantDipHz: 1800,
-    formantDipDb: -4,
-    presenceHz: 3200,
-    presenceDb: 3,
-    lowpassHz: 7000
+  transformProfiles: Object.freeze({
+    male: Object.freeze({
+      id: "PROFILE_A_M",
+      version: "2.0.0",
+      pitchSemitones: 4,
+      formantScale: 1.18,
+      formantCentersHz: Object.freeze([500, 1500, 2500]),
+      modulationDepthMs: 2.2,
+      modulationRateHz: 4.7,
+      highpassHz: 100,
+      lowpassHz: 7200,
+      targetRms: 0.14,
+      frameSize: 1024,
+      analysisHop: 256
+    }),
+    female: Object.freeze({
+      id: "PROFILE_A_F",
+      version: "2.0.0",
+      pitchSemitones: -4,
+      formantScale: 0.84,
+      formantCentersHz: Object.freeze([500, 1500, 2500]),
+      modulationDepthMs: 2.6,
+      modulationRateHz: 5.3,
+      highpassHz: 90,
+      lowpassHz: 6500,
+      targetRms: 0.14,
+      frameSize: 1024,
+      analysisHop: 256
+    })
   }),
   tasks: Object.freeze([
     Object.freeze({
