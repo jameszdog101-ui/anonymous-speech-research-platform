@@ -213,8 +213,8 @@ function updateDeviceReadyState() {
   const ready = state.devicePlayed && state.deviceRecorded;
   elements.deviceConfirm.disabled = !ready;
   if (ready) {
-    elements.deviceStatus.textContent = "播放與錄音測試已完成";
-    elements.deviceHelp.textContent = "請播放測試錄音確認聲音，然後勾選下方確認。";
+    elements.deviceStatus.textContent = "去識別化測試已完成";
+    elements.deviceHelp.textContent = "請播放轉換後的錄音確認效果，然後勾選下方確認。";
   }
 }
 function playDevicePrompt() {
@@ -239,6 +239,14 @@ function stopDeviceRecording() {
 async function startDeviceRecording() {
   assertRecordingSupport();
   clearAlert();
+  state.deviceRecorded = false;
+  elements.deviceConfirm.checked = false;
+  elements.deviceConfirm.disabled = true;
+  elements.deviceNext.disabled = true;
+  elements.devicePreview.hidden = true;
+  if (state.devicePreviewUrl) URL.revokeObjectURL(state.devicePreviewUrl);
+  state.devicePreviewUrl = null;
+  elements.devicePreview.removeAttribute("src");
   state.deviceStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
   state.deviceChunks = [];
   const mimeType = selectRecorderMimeType();
@@ -256,16 +264,29 @@ async function startDeviceRecording() {
     if (elapsed >= 15) stopDeviceRecording();
   }, 200);
 }
-function finishDeviceRecording() {
-  const localBlob = new Blob(state.deviceChunks, { type: state.deviceRecorder?.mimeType || "audio/webm" });
+async function finishDeviceRecording() {
+  const rawBlob = new Blob(state.deviceChunks, { type: state.deviceRecorder?.mimeType || "audio/webm" });
   state.deviceChunks = [];
   state.deviceRecorder = null;
-  if (state.devicePreviewUrl) URL.revokeObjectURL(state.devicePreviewUrl);
-  state.devicePreviewUrl = URL.createObjectURL(localBlob);
-  elements.devicePreview.src = state.devicePreviewUrl;
-  elements.devicePreview.hidden = false;
-  state.deviceRecorded = true;
-  updateDeviceReadyState();
+  elements.deviceRecord.disabled = true;
+  elements.deviceStatus.textContent = "正在進行 v2.0 去識別化";
+  elements.deviceHelp.textContent = "原始測試錄音只在瀏覽器記憶體中處理，不會上傳或保存。";
+  try {
+    const transformedBlob = await transformRecording(rawBlob, activeTransformProfile());
+    if (state.devicePreviewUrl) URL.revokeObjectURL(state.devicePreviewUrl);
+    state.devicePreviewUrl = URL.createObjectURL(transformedBlob);
+    elements.devicePreview.src = state.devicePreviewUrl;
+    elements.devicePreview.hidden = false;
+    state.deviceRecorded = true;
+    updateDeviceReadyState();
+  } catch (error) {
+    state.deviceRecorded = false;
+    elements.deviceStatus.textContent = "去識別化處理失敗";
+    elements.deviceHelp.textContent = "原始測試錄音未上傳也未保存，請重新錄製。";
+    showAlert(`${error.message} 原始測試錄音未上傳或保存。`);
+  } finally {
+    elements.deviceRecord.disabled = false;
+  }
 }
 
 function addSecondLanguageField() {

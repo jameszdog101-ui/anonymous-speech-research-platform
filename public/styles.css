@@ -145,6 +145,24 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 h1 { max-width: 680px; margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(32px, 5vw, 50px); line-height: 1.1; letter-spacing: 0; font-weight: 700; }
 .lead { max-width: 680px; margin: 18px 0 30px; color: var(--muted); font-size: 16px; line-height: 1.8; }
 
+.privacy-assurance {
+  margin: 26px 0;
+  padding: 22px 24px;
+  color: #123f32;
+  background: #e3f2ea;
+  border-top: 5px solid var(--green);
+  border-left: 5px solid var(--coral);
+}
+.privacy-assurance strong {
+  display: block;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: clamp(25px, 4vw, 34px);
+  line-height: 1.25;
+}
+.privacy-assurance p { margin: 12px 0 8px; font-size: 16px; font-weight: 700; line-height: 1.7; }
+.privacy-assurance small { display: block; color: #3f6559; font-size: 12px; line-height: 1.6; }
+.privacy-assurance-task { margin-top: 0; }
+
 .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 34px 0; background: var(--line); border: 1px solid var(--line); }
 .info-grid article { padding: 22px; background: var(--surface); }
 .info-grid h2 { margin: 14px 0 8px; font-size: 15px; }
@@ -273,6 +291,7 @@ footer { width: min(1180px, calc(100% - 40px)); margin: 0 auto 28px; display: fl
   .topbar-actions { gap: 8px; }
   h1 { font-size: 34px; }
   .workspace { padding: 26px 18px; }
+  .privacy-assurance { padding: 18px; }
   .task-heading { display: block; }
   .status-pill { display: inline-block; margin-top: 12px; }
   .preview-row { align-items: stretch; flex-direction: column; }

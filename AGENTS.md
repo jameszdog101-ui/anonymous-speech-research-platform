@@ -68,7 +68,7 @@ Stimulus files may be MP3 or WAV. Validate supported browser playback and show a
 
 The play-once and replay-allowed fields describe the same playback policy and must not be allowed to contradict one another. In the current MVP, each question may be played at most twice and each answer may be recorded at most twice. Prefer a single canonical policy in code, while preserving both requested concepts in configuration/API mapping if needed.
 
-Before formal tasks begin, participants must complete a local device test. The browser speaks "請從數字一數到十", the participant records themselves counting from one to ten, and the recording is played back locally. Device-test audio must never be uploaded.
+Before formal tasks begin, participants must complete a local device test. The browser speaks "請從數字一數到十", the participant records themselves counting from one to ten, and the recording is transformed with the same sex-specific PROFILE_A v2 settings before being played back locally. Device-test audio, whether raw or transformed, must never be uploaded or persisted.
 
 The initial screen provides a platform-language choice through Google Translate. Traditional Chinese remains available as the source-language fallback if the external translation service is unavailable.
 
@@ -86,6 +86,7 @@ Formal upload and storage rule:
 - Raw audio must never be uploaded to the server, R2, D1, logs, analytics, or error-reporting services.
 - Voice transformation must occur locally in the browser before upload.
 - Only transformed audio may be stored in R2.
+- Participant recordings, whether raw or transformed, must never be used to train AI models.
 - D1 stores permitted participant fields, task/submission metadata, object references, timestamps, status, and transformation version; it does not store audio blobs.
 - Avoid putting participant responses or identifying values in URLs, filenames, logs, or client-visible error traces.
 - If transformation fails, block submission and clearly tell the participant that no raw recording was uploaded.

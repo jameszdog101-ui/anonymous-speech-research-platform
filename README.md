@@ -6,6 +6,8 @@
 
 Raw microphone recordings stay in browser memory. Only a locally transformed `audio/wav` object is passed to the upload client. The Worker validates the transformed-audio headers before writing to R2; D1 stores metadata only.
 
+The local device test also applies the participant's sex-specific `PROFILE_A v2` transformation before playback, so participants can hear the expected effect before formal tasks. Neither the raw nor transformed device-test recording is uploaded or persisted. The study does not use participant recordings to train AI models.
+
 The completion page does not expose the internal submission UUID. Its downloadable PNG proof is generated locally and contains no UUID, timestamp, participant profile, or response data, preventing a returned proof from directly identifying the corresponding research record.
 
 `PROFILE_A v2` has two fixed sub-profiles selected from the participant's `biological_sex` field: `PROFILE_A_M` and `PROFILE_A_F`. Processing runs in a browser Worker and combines duration-preserving pitch shift, formant-band reshaping, deterministic micro-modulation, mono downmixing, band limiting, soft limiting, and RMS normalization. It reduces voice similarity but is not a guarantee of irreversible anonymity; production parameters require speaker-recognition, intelligibility, research-validity, and ethics review.

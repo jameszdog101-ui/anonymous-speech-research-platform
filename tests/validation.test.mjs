@@ -98,3 +98,14 @@ test("completion UI and proof do not expose the submission UUID", async () => {
   assert.doesNotMatch(app, /receipt_id/);
 });
 
+test("device test previews transformed audio and privacy promises are explicit", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(html, /你的聲音會先去識別化/);
+  assert.match(html, /本研究不會將任何錄音用於訓練 AI/);
+  assert.match(html, /正式作答只會上傳並儲存去識別化後的版本/);
+  assert.match(app, /transformRecording\(rawBlob, activeTransformProfile\(\)\)/);
+  assert.doesNotMatch(app, /createObjectURL\(rawBlob\)/);
+});
+

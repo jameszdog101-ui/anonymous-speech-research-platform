@@ -177,6 +177,12 @@
           <h1>設備測試</h1>
           <p class="lead">正式題目中的問題播放與作答錄音各只能操作兩次。請先在這裡確認喇叭與麥克風可以正常使用；設備測試內容不會上傳。</p>
 
+          <div class="privacy-assurance" role="note" aria-label="聲音去識別化說明">
+            <strong>你的聲音會先去識別化</strong>
+            <p>回放聽起來不像自己的聲音，是正常現象。原始錄音不會上傳或保存，本研究也不會將任何錄音用於訓練 AI。</p>
+            <small>設備測試只在此裝置內處理與播放；去識別化用於降低聲音被辨識的風險。</small>
+          </div>
+
           <div class="device-grid">
             <article class="device-card">
               <div class="device-number">01</div>
@@ -190,7 +196,7 @@
               <div class="device-number">02</div>
               <div>
                 <h2>測試麥克風錄音</h2>
-                <p>請使用麥克風從一數到十，再播放自己的測試錄音確認聲音。</p>
+                <p>請使用麥克風從一數到十，再播放去識別化後的測試錄音確認效果。</p>
               </div>
               <button id="device-record" class="record-button compact" type="button" aria-label="開始設備測試錄音" title="開始設備測試錄音"><span></span></button>
             </article>
@@ -205,7 +211,7 @@
           </div>
           <label class="device-confirm">
             <input id="device-confirm" type="checkbox" disabled>
-            <span>我已聽到播放內容，也能從測試錄音中聽到自己的聲音。</span>
+            <span>我已聽到播放內容，也能播放去識別化後的測試錄音。</span>
           </label>
           <div class="actions">
             <button class="button button-quiet" type="button" data-back="1"><span aria-hidden="true">←</span> 返回背景資料</button>
@@ -214,6 +220,11 @@
         </section>
 
         <section class="step" data-step-panel="3">
+          <div class="privacy-assurance privacy-assurance-task" role="note" aria-label="正式作答隱私說明">
+            <strong>你的聲音將會被去識別化</strong>
+            <p>轉換後聽起來不像自己的聲音，是正常現象。原始錄音不會上傳或保存，本研究不會將任何錄音用於訓練 AI。</p>
+            <small>正式作答只會上傳並儲存去識別化後的版本。</small>
+          </div>
           <div class="task-heading">
             <div>
               <p class="eyebrow" id="task-count">語音任務</p>
