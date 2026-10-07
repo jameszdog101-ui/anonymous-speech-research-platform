@@ -34,9 +34,9 @@ The MVP may collect only these background fields:
 - `age_group`
 - `biological_sex` (`male` or `female`; used only to select the transform sub-profile)
 - `nationality`
-- `language_background`
+- `language_background` (derived as `bilingual` or `multilingual`; never `monolingual` in this study)
 - `first_language`
-- `second_languages` (array; may contain multiple L2 languages)
+- `second_languages` (array; must contain fixed `中文（普通話）`, followed by any optional additional languages)
 - `mandarin_learning_years` (years learning Mandarin/Chinese/Putonghua)
 
 Do not collect:

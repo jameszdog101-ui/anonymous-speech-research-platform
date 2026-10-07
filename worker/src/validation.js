@@ -10,7 +10,8 @@ export const ALLOWED_PROFILE_FIELDS = Object.freeze([
 
 export const AGE_GROUPS = new Set(["under_18", "18_24", "25_34", "35_44", "45_54", "55_plus"]);
 export const BIOLOGICAL_SEXES = new Set(["male", "female"]);
-export const LANGUAGE_BACKGROUNDS = new Set(["monolingual", "bilingual", "multilingual"]);
+export const LANGUAGE_BACKGROUNDS = new Set(["bilingual", "multilingual"]);
+export const REQUIRED_SECOND_LANGUAGE = "中文（普通話）";
 export const TASK_IDS = new Set(["task_001", "task_002"]);
 export const TRANSFORM_PROFILES = Object.freeze({
   PROFILE_A_M: "2.0.1",
@@ -45,12 +46,12 @@ export function validateSubmissionPayload(payload) {
   if (!LANGUAGE_BACKGROUNDS.has(profile.language_background)) return "語言背景不正確。";
   if (!isShortText(profile.nationality)) return "國籍欄位格式不正確。";
   if (!isShortText(profile.first_language)) return "第一語言欄位格式不正確。";
-  if (!Array.isArray(profile.second_languages) || profile.second_languages.length > 6 || profile.second_languages.some((language) => !isShortText(language))) {
+  if (!Array.isArray(profile.second_languages) || profile.second_languages.length < 1 || profile.second_languages.length > 6 || profile.second_languages.some((language) => !isShortText(language))) {
     return "第二語言欄位格式不正確。";
   }
-  if (profile.language_background !== "monolingual" && profile.second_languages.length === 0) {
-    return "雙語或多語背景至少需要填寫一個第二語言。";
-  }
+  if (!profile.second_languages.includes(REQUIRED_SECOND_LANGUAGE)) return "本研究要求中文（普通話）為第二語言。";
+  const expectedBackground = profile.second_languages.length > 1 ? "multilingual" : "bilingual";
+  if (profile.language_background !== expectedBackground) return "語言背景與填寫的語言數量不一致。";
   if (typeof profile.mandarin_learning_years !== "number" || !Number.isFinite(profile.mandarin_learning_years) || profile.mandarin_learning_years < 0 || profile.mandarin_learning_years > 80) {
     return "華語學習時間不正確。";
   }

@@ -1,6 +1,6 @@
 export const STUDY_CONFIG = Object.freeze({
   studyId: "speech-pilot-001",
-  version: "0.3.1",
+  version: "0.3.2",
   maxRecordingSeconds: 30,
   transformProfiles: Object.freeze({
     male: Object.freeze({

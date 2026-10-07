@@ -105,7 +105,7 @@
         <section class="step" data-step-panel="1">
           <p class="eyebrow">背景資料</p>
           <h1>語言使用概況</h1>
-          <p class="lead">以下資料僅供分組分析。請勿在任何欄位填入可辨識個人身分的內容。</p>
+          <p class="lead">本研究招募以中文為第二語言的參與者，因此所有參與者均至少具有雙語背景。以下資料僅供分組分析，請勿填入可辨識個人身分的內容。</p>
 
           <form id="profile-form" class="form-grid">
             <label>
@@ -135,36 +135,31 @@
               <small class="field-help">請填國家或地區名稱，不需填居住地址。</small>
             </label>
             <label>
-              <span>語言背景</span>
-              <select name="language_background" required>
-                <option value="">請選擇</option>
-                <option value="monolingual">單語（只會說一種語言）</option>
-                <option value="bilingual">雙語（會說兩種語言）</option>
-                <option value="multilingual">多語（會說三種或以上語言）</option>
-              </select>
-              <small class="field-help">請依你能實際理解或使用的語言數量選擇。</small>
-            </label>
-            <label>
               <span>第一語言</span>
               <input name="first_language" maxlength="40" placeholder="例如：日文" autocomplete="off" required>
               <small class="field-help">第一語言（L1）是你最早自然習得、通常從小在家庭中使用的語言。</small>
             </label>
-            <fieldset class="language-fields full-width">
-              <legend>第二語言</legend>
-              <small class="field-help">第二語言（L2）指第一語言之後習得的其他語言，不代表熟練程度。如有多個，可逐一新增。</small>
-              <div id="second-languages" class="repeatable-fields">
-                <div class="repeatable-row">
-                  <input name="second_languages" maxlength="40" placeholder="例如：英語" autocomplete="off">
-                </div>
-              </div>
-              <small class="field-help second-language-note">若只會一種語言，此欄位可留白。</small>
-              <button id="add-language" class="text-button" type="button"><span aria-hidden="true">＋</span> 新增另一個第二語言</button>
-            </fieldset>
-            <label class="full-width">
+            <div class="fixed-language-field">
+              <span>第二語言</span>
+              <strong>中文（普通話）</strong>
+              <small class="field-help">本研究固定以中文作為第二語言（L2），不需另外填寫。</small>
+            </div>
+            <label>
               <span>華語／漢語／中文／普通話學習時間（年）</span>
               <input name="mandarin_learning_years" type="number" min="0" max="80" step="0.5" inputmode="decimal" placeholder="例如：1.5" required>
               <small class="field-help">請填累計學習年數，可使用 0.5 表示半年。</small>
             </label>
+            <fieldset class="language-fields full-width">
+              <legend>其他會使用的語言（選填）</legend>
+              <small class="field-help">若你除了第一語言與中文之外還會使用其他語言，請逐一填寫；系統會自動歸類為多語背景。</small>
+              <div id="other-languages" class="repeatable-fields">
+                <div class="repeatable-row">
+                  <input name="other_languages" maxlength="40" placeholder="例如：英語" autocomplete="off">
+                </div>
+              </div>
+              <small class="field-help other-language-note">沒有其他語言時可留白。</small>
+              <button id="add-other-language" class="text-button" type="button"><span aria-hidden="true">＋</span> 新增另一個語言</button>
+            </fieldset>
           </form>
 
           <div class="actions">

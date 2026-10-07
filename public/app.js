@@ -15,7 +15,7 @@ const elements = {
   languageGate: $("#language-gate"), platformLanguage: $("#platform-language"), enterPlatform: $("#enter-platform"),
   changeLanguage: $("#change-language"), translateStatus: $("#translate-status"),
   alert: $("#global-alert"), consent: $("#consent"), consentNext: $("#consent-next"),
-  profileForm: $("#profile-form"), profileNext: $("#profile-next"), addLanguage: $("#add-language"), secondLanguages: $("#second-languages"),
+  profileForm: $("#profile-form"), profileNext: $("#profile-next"), addOtherLanguage: $("#add-other-language"), otherLanguages: $("#other-languages"),
   panels: [...document.querySelectorAll("[data-step-panel]")], progress: [...document.querySelectorAll("#progress-list li")], taskProgressLabel: $("#task-progress-label"),
   devicePlay: $("#device-play"), deviceRecord: $("#device-record"), deviceStatus: $("#device-status"), deviceHelp: $("#device-help"),
   deviceTime: $("#device-time"), devicePreview: $("#device-preview"), deviceConfirm: $("#device-confirm"), deviceNext: $("#device-next"),
@@ -289,19 +289,19 @@ async function finishDeviceRecording() {
   }
 }
 
-function addSecondLanguageField() {
-  const count = elements.secondLanguages.querySelectorAll("input").length;
-  if (count >= 6) { showAlert("第二語言欄位最多可新增六個。如仍不足，請聯絡研究人員調整設定。"); return; }
+function addOtherLanguageField() {
+  const count = elements.otherLanguages.querySelectorAll("input").length;
+  if (count >= 5) { showAlert("其他語言欄位最多可新增五個。如仍不足，請聯絡研究人員調整設定。"); return; }
   const row = document.createElement("div");
   row.className = "repeatable-row";
   const input = document.createElement("input");
-  Object.assign(input, { name: "second_languages", maxLength: 40, placeholder: `第二語言 ${count + 1}`, autocomplete: "off" });
+  Object.assign(input, { name: "other_languages", maxLength: 40, placeholder: `其他語言 ${count + 1}`, autocomplete: "off" });
   const remove = document.createElement("button");
   Object.assign(remove, { type: "button", className: "remove-language", title: "移除此語言欄位", textContent: "×" });
   remove.setAttribute("aria-label", "移除此語言欄位");
   remove.addEventListener("click", () => row.remove());
   row.append(input, remove);
-  elements.secondLanguages.append(row);
+  elements.otherLanguages.append(row);
   input.focus();
 }
 
@@ -422,18 +422,15 @@ if (savedLanguage) {
 elements.consent.addEventListener("change", () => { elements.consentNext.disabled = !elements.consent.checked; });
 elements.consentNext.addEventListener("click", () => setStep(1));
 document.querySelectorAll("[data-back]").forEach((button) => button.addEventListener("click", () => setStep(Number(button.dataset.back))));
-elements.addLanguage.addEventListener("click", addSecondLanguageField);
+elements.addOtherLanguage.addEventListener("click", addOtherLanguageField);
 elements.profileNext.addEventListener("click", () => {
   if (!elements.profileForm.reportValidity()) return;
   const data = new FormData(elements.profileForm);
-  const secondLanguages = data.getAll("second_languages").map((value) => value.trim()).filter(Boolean);
-  if (data.get("language_background") !== "monolingual" && secondLanguages.length === 0) {
-    showAlert("選擇雙語或多語時，請至少填寫一個第二語言。");
-    return;
-  }
+  const otherLanguages = data.getAll("other_languages").map((value) => value.trim()).filter(Boolean);
   state.profile = {
-    age_group: data.get("age_group"), biological_sex: data.get("biological_sex"), nationality: data.get("nationality").trim(), language_background: data.get("language_background"),
-    first_language: data.get("first_language").trim(), second_languages: secondLanguages,
+    age_group: data.get("age_group"), biological_sex: data.get("biological_sex"), nationality: data.get("nationality").trim(),
+    language_background: otherLanguages.length > 0 ? "multilingual" : "bilingual",
+    first_language: data.get("first_language").trim(), second_languages: ["中文（普通話）", ...otherLanguages],
     mandarin_learning_years: Number(data.get("mandarin_learning_years"))
   };
   setStep(2);

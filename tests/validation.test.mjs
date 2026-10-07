@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { STUDY_CONFIG } from "../public/study-config.js";
 import {
+  REQUIRED_SECOND_LANGUAGE,
   TRANSFORM_PROFILES,
   TRANSFORM_PARAMETER_SETS,
   hasWavHeader,
@@ -17,7 +18,7 @@ const validProfile = {
   nationality: "日本",
   language_background: "bilingual",
   first_language: "日文",
-  second_languages: ["英語", "日語"],
+  second_languages: ["中文（普通話）"],
   mandarin_learning_years: 8
 };
 
@@ -75,15 +76,25 @@ test("biological sex maps to one fixed v2 transform profile", () => {
   assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.modulationDepthMs, 0);
 });
 
-test("monolingual profiles may omit L2 but bilingual profiles may not", () => {
+test("requires Mandarin as L2 and derives bilingual or multilingual consistently", () => {
+  assert.equal(REQUIRED_SECOND_LANGUAGE, "中文（普通話）");
+  assert.equal(validateSubmissionPayload({ consent: true, study_id: "pilot", study_version: "1", profile: validProfile }), null);
+  assert.match(validateSubmissionPayload({
+    consent: true, study_id: "pilot", study_version: "1",
+    profile: { ...validProfile, language_background: "monolingual" }
+  }), /語言背景/);
+  assert.match(validateSubmissionPayload({
+    consent: true, study_id: "pilot", study_version: "1",
+    profile: { ...validProfile, second_languages: ["英語"] }
+  }), /中文/);
   assert.equal(validateSubmissionPayload({
     consent: true, study_id: "pilot", study_version: "1",
-    profile: { ...validProfile, language_background: "monolingual", second_languages: [] }
+    profile: { ...validProfile, language_background: "multilingual", second_languages: ["中文（普通話）", "英語"] }
   }), null);
   assert.match(validateSubmissionPayload({
     consent: true, study_id: "pilot", study_version: "1",
-    profile: { ...validProfile, second_languages: [] }
-  }), /至少/);
+    profile: { ...validProfile, second_languages: ["中文（普通話）", "英語"] }
+  }), /數量不一致/);
 });
 
 test("recognizes a WAV container signature", () => {
@@ -111,11 +122,23 @@ test("device test previews transformed audio and privacy promises are explicit",
   assert.doesNotMatch(app, /createObjectURL\(rawBlob\)/);
 });
 
-test("second-language guidance remains readable after translation", async () => {
+test("optional other-language guidance remains readable after translation", async () => {
   const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   assert.match(html, /placeholder="例如：英語"/);
-  assert.match(html, /second-language-note/);
-  assert.doesNotMatch(html, /placeholder="[^"]*單語者可留白/);
+  assert.match(html, /other-language-note/);
+  assert.doesNotMatch(html, /placeholder="[^"]*可留白/);
+});
+
+test("background form fixes Mandarin as L2 and derives language background", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.doesNotMatch(html, /name="language_background"/);
+  assert.match(html, /<strong>中文（普通話）<\/strong>/);
+  assert.match(html, /華語／漢語／中文／普通話學習時間（年）/);
+  assert.match(html, /name="other_languages"/);
+  assert.match(app, /language_background: otherLanguages\.length > 0 \? "multilingual" : "bilingual"/);
+  assert.match(app, /second_languages: \["中文（普通話）", \.\.\.otherLanguages\]/);
 });
 
 test("language recovery controls remain readable in every translation", async () => {

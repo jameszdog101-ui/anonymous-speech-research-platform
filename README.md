@@ -2,6 +2,8 @@
 
 匿名語音研究平台 MVP。受試者可選擇平台語言，完成同意、背景資料、設備測試、問題播放、錄音、本機聲音轉換及匿名提交。
 
+The current study targets participants who use Mandarin Chinese as a second language. The background form fixes `中文（普通話）` as L2, collects L1 and optional additional languages, and derives `language_background` as bilingual or multilingual instead of asking participants to classify themselves.
+
 ## Privacy invariant
 
 Raw microphone recordings stay in browser memory. Only a locally transformed `audio/wav` object is passed to the upload client. The Worker validates the transformed-audio headers before writing to R2; D1 stores metadata only.
