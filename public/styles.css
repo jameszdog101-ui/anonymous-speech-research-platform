@@ -84,8 +84,8 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .privacy-chip { font-size: 13px; color: var(--green-dark); font-weight: 700; }
 .privacy-chip span { color: #31a677; margin-right: 6px; }
 .topbar-actions { display: flex; align-items: center; gap: 18px; }
-.language-button { min-height: 34px; padding: 0 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 12px; font-weight: 800; }
-.language-button:hover { background: #f4f5f0; }
+.language-button { min-height: 40px; padding: 0 14px; border: 1px solid var(--green); background: #eef7f2; color: var(--green-dark); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.language-button:hover { background: #dcefe6; }
 
 .shell {
   width: min(1180px, calc(100% - 40px));

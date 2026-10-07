@@ -364,7 +364,7 @@ elements.enterPlatform.addEventListener("click", () => {
   sessionStorage.setItem("platformLanguage", language);
   if (language === "zh-TW") {
     document.cookie = "googtrans=; Max-Age=0; path=/";
-    closeLanguageGate();
+    window.location.reload();
     return;
   }
   document.cookie = `googtrans=/zh-TW/${language}; path=/; SameSite=Lax`;
@@ -375,7 +375,7 @@ elements.changeLanguage.addEventListener("click", () => {
   elements.languageGate.hidden = false;
   document.body.classList.add("language-locked");
 });
-document.addEventListener("google-translate-ready", () => { elements.translateStatus.textContent = "選好語言後，按下方按鈕進入平台。"; });
+document.addEventListener("google-translate-ready", () => { elements.translateStatus.textContent = "選擇語言後繼續 / Select a language to continue."; });
 
 const savedLanguage = sessionStorage.getItem("platformLanguage");
 if (savedLanguage) {

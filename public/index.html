@@ -12,28 +12,28 @@
     <div id="language-gate" class="language-gate" role="dialog" aria-modal="true" aria-labelledby="language-title">
       <div class="language-panel">
         <span class="brand-mark language-mark" aria-hidden="true">聲</span>
-        <p class="eyebrow">Language / 語言</p>
-        <h1 id="language-title">選擇平台語言</h1>
+        <p class="eyebrow notranslate" translate="no">🌐 語言 / Language</p>
+        <h1 id="language-title" class="notranslate" translate="no">選擇語言 / Choose language</h1>
         <p>請選擇閱讀本研究平台時使用的語言。翻譯由 Google Translate 提供。</p>
-        <label class="language-select">
+        <label class="language-select notranslate" translate="no">
           <span>平台語言 / Platform language</span>
-          <select id="platform-language">
-            <option value="zh-TW">繁體中文</option>
-            <option value="zh-CN">简体中文</option>
+          <select id="platform-language" class="notranslate" translate="no">
+            <option value="zh-TW">繁體中文 / Traditional Chinese</option>
+            <option value="zh-CN">简体中文 / Simplified Chinese</option>
             <option value="en">English</option>
-            <option value="ja">日本語</option>
-            <option value="ko">한국어</option>
-            <option value="vi">Tiếng Việt</option>
-            <option value="id">Bahasa Indonesia</option>
-            <option value="ms">Bahasa Melayu</option>
-            <option value="th">ไทย</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
+            <option value="ja">日本語 / Japanese</option>
+            <option value="ko">한국어 / Korean</option>
+            <option value="vi">Tiếng Việt / Vietnamese</option>
+            <option value="id">Bahasa Indonesia / Indonesian</option>
+            <option value="ms">Bahasa Melayu / Malay</option>
+            <option value="th">ไทย / Thai</option>
+            <option value="es">Español / Spanish</option>
+            <option value="fr">Français / French</option>
           </select>
         </label>
         <div id="google_translate_element" class="google-translate-engine" aria-hidden="true"></div>
-        <p id="translate-status" class="field-help">繁體中文為原始語言；其他語言由 Google Translate 產生。</p>
-        <button id="enter-platform" class="button button-primary" type="button">使用目前語言進入 <span aria-hidden="true">→</span></button>
+        <p id="translate-status" class="field-help notranslate" translate="no">選擇語言後繼續 / Select a language to continue.</p>
+        <button id="enter-platform" class="button button-primary notranslate" type="button" translate="no">使用此語言 / Continue <span aria-hidden="true">→</span></button>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
         </div>
       </div>
       <div class="topbar-actions">
-        <button id="change-language" class="language-button" type="button">語言</button>
+        <button id="change-language" class="language-button notranslate" type="button" translate="no" aria-label="切換語言 / Change language" title="切換語言 / Change language">🌐 語言 Language</button>
         <div class="privacy-chip"><span aria-hidden="true">●</span> 原音不上傳</div>
       </div>
     </header>

@@ -118,3 +118,14 @@ test("second-language guidance remains readable after translation", async () => 
   assert.doesNotMatch(html, /placeholder="[^"]*單語者可留白/);
 });
 
+test("language recovery controls remain readable in every translation", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(html, /id="change-language"[^>]*notranslate[^>]*>🌐 語言 Language</);
+  assert.match(html, /id="platform-language"[^>]*notranslate[^>]*translate="no"/);
+  assert.match(html, /繁體中文 \/ Traditional Chinese/);
+  assert.match(html, /한국어 \/ Korean/);
+  assert.match(app, /language === "zh-TW"[\s\S]*window\.location\.reload\(\)/);
+});
+
