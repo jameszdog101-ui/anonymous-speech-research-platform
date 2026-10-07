@@ -28,6 +28,7 @@ function corsHeaders(request, env) {
 }
 
 function route(pathname) {
+  if (pathname === "/admin/api/study-control") return { name: "admin-study-control" };
   if (pathname === "/admin/api/researchers/revoke-all") return { name: "admin-researchers-revoke-all" };
   if (pathname === "/admin/api/researchers") return { name: "admin-researchers" };
   const adminResearcher = pathname.match(/^\/admin\/api\/researchers\/([^/]+)$/);
@@ -53,10 +54,48 @@ function route(pathname) {
   if (finalize) return { name: "finalize", submissionId: finalize[1] };
   if (pathname === "/api/submissions") return { name: "submissions" };
   if (pathname === "/api/health") return { name: "health" };
+  if (pathname === "/api/study-status") return { name: "study-status" };
   if (pathname === "/api/study-config") return { name: "study-config" };
   const studyAsset = pathname.match(/^\/api\/study-assets\/([^/]+)$/);
   if (studyAsset) return { name: "study-asset", taskId: studyAsset[1] };
   return { name: "not-found" };
+}
+
+async function studyStatus(env) {
+  const control = await env.DB.prepare("SELECT is_open, max_submissions, closed_reason, updated_at FROM study_control WHERE id = 1").first();
+  const totals = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed FROM submissions").first();
+  const accepted = Number(totals?.total || 0);
+  const maximum = Number(control?.max_submissions || 100);
+  const isOpen = Boolean(control?.is_open ?? 1) && accepted < maximum;
+  return {
+    open: isOpen,
+    max_submissions: maximum,
+    accepted_submissions: accepted,
+    completed_submissions: Number(totals?.completed || 0),
+    remaining: Math.max(0, maximum - accepted),
+    closed_reason: isOpen ? null : control?.closed_reason || (accepted >= maximum ? "limit_reached" : "manual"),
+    updated_at: control?.updated_at || null
+  };
+}
+
+async function adminStudyControl(request, env, email) {
+  if (!isOwner(env, email)) return json({ error: "只有最高權限擁有者可以變更研究收件設定。" }, 403);
+  if (request.method === "GET") {
+    await audit(env, email, "view_study_control");
+    return json(await studyStatus(env));
+  }
+  const payload = await request.json().catch(() => null);
+  const maximum = Number(payload?.max_submissions);
+  if (!Number.isInteger(maximum) || maximum < 1 || maximum > 100000) return json({ error: "最高收錄數量必須是 1 至 100000 的整數。" }, 400);
+  if (typeof payload?.open !== "boolean") return json({ error: "收件狀態格式不正確。" }, 400);
+  const current = await studyStatus(env);
+  const requestedOpen = payload.open && current.accepted_submissions < maximum;
+  const reason = requestedOpen ? null : current.accepted_submissions >= maximum ? "limit_reached" : "manual";
+  const now = new Date().toISOString();
+  await env.DB.prepare("UPDATE study_control SET is_open = ?, max_submissions = ?, closed_reason = ?, updated_by = ?, updated_at = ? WHERE id = 1")
+    .bind(requestedOpen ? 1 : 0, maximum, reason, email, now).run();
+  await audit(env, email, requestedOpen ? "open_study_collection" : "close_study_collection");
+  return json(await studyStatus(env));
 }
 
 async function researcherIdentity(request, env) {
@@ -259,6 +298,9 @@ async function createSubmission(request, env) {
   const error = validateSubmissionPayload(payload);
   if (error) return json({ error }, 400);
 
+  const availability = await studyStatus(env);
+  if (!availability.open) return json({ error: "本研究目前已停止收件。", study_closed: true }, 409);
+
   const id = crypto.randomUUID();
   const profile = payload.profile;
   await env.DB.prepare(`
@@ -279,6 +321,10 @@ async function createSubmission(request, env) {
     profile.mandarin_learning_years,
     new Date().toISOString()
   ).run();
+  if (availability.accepted_submissions + 1 >= availability.max_submissions) {
+    await env.DB.prepare("UPDATE study_control SET is_open = 0, closed_reason = 'limit_reached', updated_by = 'system', updated_at = ? WHERE id = 1")
+      .bind(new Date().toISOString()).run();
+  }
   return json({ submission_id: id }, 201);
 }
 
@@ -368,6 +414,7 @@ export default {
         else if (currentRoute.name === "admin-audio" && request.method === "GET") response = await adminAudio(request, env, email, currentRoute.submissionId, currentRoute.taskId);
         else if (currentRoute.name === "admin-review" && request.method === "PUT") response = await adminReview(request, env, email, currentRoute.submissionId);
         else if (currentRoute.name === "admin-export" && request.method === "GET") response = await adminExport(env, email);
+        else if (currentRoute.name === "admin-study-control" && ["GET", "PUT"].includes(request.method)) response = await adminStudyControl(request, env, email);
         else if (currentRoute.name === "admin-researchers" && request.method === "GET") response = await adminResearchers(env, email);
         else if (currentRoute.name === "admin-researchers" && request.method === "POST") response = await addResearcher(request, env, email);
         else if (currentRoute.name === "admin-researcher" && ["PATCH", "DELETE"].includes(request.method)) response = await changeResearcher(request, env, email, currentRoute.email);
@@ -382,6 +429,7 @@ export default {
         }
       }
       else if (currentRoute.name === "health" && request.method === "GET") response = json({ ok: true });
+      else if (currentRoute.name === "study-status" && request.method === "GET") response = json(await studyStatus(env));
       else if (currentRoute.name === "study-config" && request.method === "GET") response = await publishedStudyConfig(env);
       else if (currentRoute.name === "study-asset" && request.method === "GET") response = await publishedStudyAsset(env, currentRoute.taskId);
       else if (currentRoute.name === "submissions" && request.method === "POST") response = await createSubmission(request, env);

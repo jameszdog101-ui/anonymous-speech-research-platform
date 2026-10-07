@@ -30,6 +30,18 @@
 
     <div id="alert" class="alert" role="alert" hidden></div>
 
+    <section id="collection-control" class="collection-control" aria-label="研究收件控制">
+      <div class="control-copy">
+        <strong id="collection-state">正在讀取收件狀態…</strong>
+        <span id="collection-count">目前收件數與剩餘名額將顯示於此。</span>
+      </div>
+      <form id="collection-form" class="control-form">
+        <label>最高收錄數量<input name="max_submissions" type="number" min="1" max="100000" required></label>
+        <button type="submit">儲存上限</button>
+        <button id="toggle-collection" class="close-study" type="button">立即關閉收件</button>
+      </form>
+    </section>
+
     <section class="metrics" aria-label="提交摘要">
       <article><span>全部提交</span><strong id="metric-total">—</strong></article>
       <article><span>已完成</span><strong id="metric-completed">—</strong></article>

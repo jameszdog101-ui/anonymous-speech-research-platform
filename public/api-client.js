@@ -71,3 +71,9 @@ export async function getPublishedStudyConfig() {
   return { ...payload, tasks: payload.tasks.map((task) => ({ ...task, audio_stimulus: apiUrl(task.audio_stimulus) })) };
 }
 
+export async function getStudyStatus() {
+  assertLiveApi();
+  const response = await fetch(apiUrl("/api/study-status"));
+  return parseResponse(response);
+}
+

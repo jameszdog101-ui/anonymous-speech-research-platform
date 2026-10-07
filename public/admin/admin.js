@@ -25,6 +25,26 @@ async function loadSummary() {
   $("#metric-pending").textContent = data.pending_review;
 }
 
+let collectionOpen = true;
+async function loadCollectionControl() {
+  const data = await api("../admin/api/study-control");
+  collectionOpen = data.open;
+  $("#collection-form").elements.max_submissions.value = data.max_submissions;
+  $("#collection-state").textContent = data.open ? "受試者端目前開放收件" : "受試者端目前已停止收件";
+  $("#collection-count").textContent = `已建立 ${data.accepted_submissions} 份提交，已完成 ${data.completed_submissions} 份，剩餘 ${data.remaining} 個名額。`;
+  $("#collection-control").classList.toggle("is-closed", !data.open);
+  const toggle = $("#toggle-collection");
+  toggle.textContent = data.open ? "立即關閉收件" : "重新開放收件";
+  toggle.classList.toggle("close-study", data.open);
+}
+
+async function saveCollectionControl(open) {
+  const maximum = Number($("#collection-form").elements.max_submissions.value);
+  const data = await api("../admin/api/study-control", { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ open, max_submissions:maximum }) });
+  await loadCollectionControl();
+  showPanelAlert("#alert", data.open ? "收件設定已儲存，受試者端目前開放。" : "收件已關閉；新的參與者無法建立提交。", true);
+}
+
 async function loadSubmissions() {
   const status = $("#status-filter").value;
   const data = await api(`../admin/api/submissions${status ? `?status=${status}` : ""}`);
@@ -63,9 +83,11 @@ async function loadDetail(id) {
   detailPane.replaceChildren(fragment);
 }
 
-async function loadAll() { alertBox.hidden = true; try { await Promise.all([loadSummary(), loadSubmissions()]); } catch (error) { showError(error); rows.innerHTML = '<tr><td colspan="5" class="empty">無法載入資料。</td></tr>'; } }
+async function loadAll() { alertBox.hidden = true; try { await Promise.all([loadSummary(), loadSubmissions(), loadCollectionControl()]); } catch (error) { showError(error); rows.innerHTML = '<tr><td colspan="5" class="empty">無法載入資料。</td></tr>'; } }
 $("#refresh").addEventListener("click", loadAll);
 $("#status-filter").addEventListener("change", () => loadSubmissions().catch(showError));
+$("#collection-form").addEventListener("submit", async (event) => { event.preventDefault(); try { await saveCollectionControl(collectionOpen); } catch (error) { showError(error); } });
+$("#toggle-collection").addEventListener("click", async () => { const action = collectionOpen ? "關閉" : "重新開放"; if (!confirm(`確定要${action}研究收件？`)) return; try { await saveCollectionControl(!collectionOpen); } catch (error) { showError(error); } });
 
 document.querySelectorAll(".nav-tab").forEach((button) => button.addEventListener("click", () => {
   document.querySelectorAll(".nav-tab").forEach((tab) => tab.classList.toggle("active", tab === button));

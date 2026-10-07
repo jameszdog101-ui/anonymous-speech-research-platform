@@ -1,6 +1,6 @@
 import { STUDY_CONFIG } from "./study-config.js";
 import { transformRecording } from "./audio-transform.js";
-import { createSubmission, finalizeSubmission, getPublishedStudyConfig, uploadTransformedAudio } from "./api-client.js";
+import { createSubmission, finalizeSubmission, getPublishedStudyConfig, getStudyStatus, uploadTransformedAudio } from "./api-client.js";
 
 let runtimeConfig = STUDY_CONFIG;
 
@@ -502,8 +502,13 @@ window.addEventListener("beforeunload", () => {
 
 try {
   if (window.location.hostname.endsWith(".pages.dev")) {
-    const published = await getPublishedStudyConfig();
+    const [published, availability] = await Promise.all([getPublishedStudyConfig(), getStudyStatus()]);
     runtimeConfig = { ...STUDY_CONFIG, version: `published-${published.version}`, tasks: published.tasks };
+    if (!availability.open) {
+      elements.consent.disabled = true;
+      elements.consentNext.disabled = true;
+      showAlert("本研究目前已停止收件，暫時無法建立新的提交。感謝你的關注。");
+    }
   }
 } catch (error) {
   console.warn("Published study configuration unavailable; using bundled fallback.", error);

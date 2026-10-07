@@ -227,3 +227,16 @@ test("researcher portal requires Access identity and audits sensitive actions", 
   assert.match(schema, /CREATE TABLE IF NOT EXISTS study_publications/);
 });
 
+test("study collection has a server-enforced cap and manual control", async () => {
+  const schema = await readFile(new URL("../worker/schema.sql", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../worker/src/index.js", import.meta.url), "utf8");
+  const admin = await readFile(new URL("../public/admin/admin.js", import.meta.url), "utf8");
+  const client = await readFile(new URL("../public/api-client.js", import.meta.url), "utf8");
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS study_control/);
+  assert.match(schema, /max_submissions INTEGER NOT NULL DEFAULT 100/);
+  assert.match(worker, /availability\.accepted_submissions \+ 1 >= availability\.max_submissions/);
+  assert.match(worker, /本研究目前已停止收件/);
+  assert.match(admin, /admin\/api\/study-control/);
+  assert.match(client, /api\/study-status/);
+});
+

@@ -85,3 +85,15 @@ CREATE TABLE IF NOT EXISTS study_publications (
 CREATE INDEX IF NOT EXISTS idx_researchers_status ON researchers(status);
 CREATE INDEX IF NOT EXISTS idx_study_tasks_sort ON study_tasks(sort_order);
 
+CREATE TABLE IF NOT EXISTS study_control (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  is_open INTEGER NOT NULL DEFAULT 1 CHECK (is_open IN (0, 1)),
+  max_submissions INTEGER NOT NULL DEFAULT 100 CHECK (max_submissions > 0),
+  closed_reason TEXT,
+  updated_by TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO study_control (id, is_open, max_submissions, updated_by, updated_at)
+VALUES (1, 1, 100, 'system', '2026-10-07T00:00:00.000Z');
+
