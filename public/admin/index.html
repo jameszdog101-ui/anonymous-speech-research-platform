@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>研究人員端 | 匿名語音研究平台</title>
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <div class="brand">
+      <img src="../assets/research-mark.svg" width="40" height="40" alt="">
+      <div><strong>匿名語音研究平台</strong><span>研究人員端</span></div>
+    </div>
+    <a class="export-button" href="../admin/api/exports.csv" download>下載 CSV</a>
+  </header>
+
+  <main class="admin-shell">
+    <section class="page-heading">
+      <div><p>研究資料管理</p><h1>提交與資格審核</h1></div>
+      <button id="refresh" type="button" title="重新整理" aria-label="重新整理">↻</button>
+    </section>
+
+    <div id="alert" class="alert" role="alert" hidden></div>
+
+    <section class="metrics" aria-label="提交摘要">
+      <article><span>全部提交</span><strong id="metric-total">—</strong></article>
+      <article><span>已完成</span><strong id="metric-completed">—</strong></article>
+      <article><span>進行中</span><strong id="metric-progress">—</strong></article>
+      <article><span>待資格審核</span><strong id="metric-pending">—</strong></article>
+    </section>
+
+    <section class="workspace">
+      <div class="list-pane">
+        <div class="toolbar">
+          <h2>匿名提交</h2>
+          <select id="status-filter" aria-label="依狀態篩選">
+            <option value="">全部狀態</option>
+            <option value="completed">已完成</option>
+            <option value="in_progress">進行中</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>匿名編號</th><th>狀態</th><th>第一語言</th><th>資格審核</th><th>提交時間</th></tr></thead>
+            <tbody id="submission-rows"><tr><td colspan="5" class="empty">正在載入…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside id="detail-pane" class="detail-pane">
+        <div class="empty-detail"><strong>選擇一筆匿名提交</strong><span>查看背景資料、去識別化錄音及資格審核。</span></div>
+      </aside>
+    </section>
+  </main>
+
+  <template id="detail-template">
+    <div class="detail-header"><div><span>匿名提交</span><strong data-field="id"></strong></div><button id="close-detail" aria-label="關閉詳細資料" title="關閉">×</button></div>
+    <dl class="profile-grid">
+      <div><dt>狀態</dt><dd data-field="status"></dd></div><div><dt>年齡</dt><dd data-field="age_group"></dd></div>
+      <div><dt>生理性別</dt><dd data-field="biological_sex"></dd></div><div><dt>國籍</dt><dd data-field="nationality"></dd></div>
+      <div><dt>第一語言</dt><dd data-field="first_language"></dd></div><div><dt>華語學習年數</dt><dd data-field="mandarin_learning_years"></dd></div>
+    </dl>
+    <section><h3>去識別化錄音</h3><div id="recordings" class="recordings"></div></section>
+    <form id="review-form" class="review-form">
+      <h3>第一語言資格審核</h3>
+      <label>審核結果<select name="eligibility_status" required><option value="">請選擇</option><option value="eligible">符合</option><option value="ineligible">不符合</option><option value="undetermined">無法判定</option></select></label>
+      <label>研究備註<textarea name="notes" rows="3" maxlength="1000" placeholder="只記錄研究判定，不輸入身分猜測。"></textarea></label>
+      <button type="submit">儲存審核結果</button>
+    </form>
+  </template>
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

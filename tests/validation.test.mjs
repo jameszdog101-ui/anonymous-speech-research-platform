@@ -188,3 +188,30 @@ test("brand mark is graphical and cannot be translated", async () => {
   assert.match(server, /"\.svg": "image\/svg\+xml/);
 });
 
+test("GitHub Pages demo uses relative assets and blocks research uploads", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const config = await readFile(new URL("../public/study-config.js", import.meta.url), "utf8");
+  const api = await readFile(new URL("../public/api-client.js", import.meta.url), "utf8");
+
+  assert.doesNotMatch(html, /(?:src|href)="\//);
+  assert.doesNotMatch(config, /audio_stimulus:\s*"\//);
+  assert.match(api, /hostname\.endsWith\("github\.io"\)/);
+  assert.match(api, /不會建立或上傳研究資料/);
+});
+
+test("researcher portal requires Access identity and audits sensitive actions", async () => {
+  const worker = await readFile(new URL("../worker/src/index.js", import.meta.url), "utf8");
+  const schema = await readFile(new URL("../worker/schema.sql", import.meta.url), "utf8");
+  const admin = await readFile(new URL("../public/admin/index.html", import.meta.url), "utf8");
+
+  assert.match(worker, /Cf-Access-Authenticated-User-Email/);
+  assert.match(worker, /Cf-Access-Jwt-Assertion/);
+  assert.match(worker, /download_audio/);
+  assert.match(worker, /review_eligibility/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS submission_reviews/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS researcher_audit_log/);
+  assert.match(admin, /符合/);
+  assert.match(admin, /不符合/);
+  assert.match(admin, /無法判定/);
+});
+

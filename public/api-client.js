@@ -1,5 +1,11 @@
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
+function assertLiveApi() {
+  if (window.location.hostname.endsWith("github.io")) {
+    throw new Error("這是 GitHub Pages 展示版，不會建立或上傳研究資料。請使用正式研究網址提交。");
+  }
+}
+
 async function parseResponse(response) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -9,6 +15,7 @@ async function parseResponse(response) {
 }
 
 export async function createSubmission(profile, studyConfig) {
+  assertLiveApi();
   const response = await fetch("/api/submissions", {
     method: "POST",
     headers: JSON_HEADERS,
@@ -23,6 +30,7 @@ export async function createSubmission(profile, studyConfig) {
 }
 
 export async function uploadTransformedAudio(submissionId, task, transformedBlob, transformProfile) {
+  assertLiveApi();
   if (!(transformedBlob instanceof Blob) || transformedBlob.type !== "audio/wav") {
     throw new Error("安全檢查失敗：上傳模組只接受已轉換的 WAV 音檔。");
   }
@@ -41,6 +49,7 @@ export async function uploadTransformedAudio(submissionId, task, transformedBlob
 }
 
 export async function finalizeSubmission(submissionId) {
+  assertLiveApi();
   const response = await fetch(`/api/submissions/${encodeURIComponent(submissionId)}/finalize`, {
     method: "POST",
     headers: JSON_HEADERS,

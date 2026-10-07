@@ -42,7 +42,11 @@ async function ensureDataStore() {
 
 async function readStore() {
   await ensureDataStore();
-  return JSON.parse(await readFile(metadataPath, "utf8"));
+  const store = JSON.parse(await readFile(metadataPath, "utf8"));
+  store.submissions ||= {};
+  store.reviews ||= {};
+  store.audit_log ||= [];
+  return store;
 }
 
 async function saveStore(store) {
@@ -74,6 +78,84 @@ function requestAdapter(request) {
 }
 
 async function handleApi(request, response, pathname) {
+  if (pathname === "/admin/api/summary" && request.method === "GET") {
+    const store = await readStore();
+    const submissions = Object.values(store.submissions);
+    sendJson(response, 200, {
+      total: submissions.length,
+      completed: submissions.filter((item) => item.status === "completed").length,
+      in_progress: submissions.filter((item) => item.status === "in_progress").length,
+      pending_review: submissions.filter((item) => item.status === "completed" && !store.reviews[item.id]).length
+    });
+    return true;
+  }
+
+  if (pathname === "/admin/api/submissions" && request.method === "GET") {
+    const store = await readStore();
+    const requestedStatus = new URL(request.url, `http://${request.headers.host}`).searchParams.get("status");
+    const submissions = Object.values(store.submissions)
+      .filter((item) => !requestedStatus || item.status === requestedStatus)
+      .map((item) => ({ ...item.profile, id: item.id, study_id: item.study_id, study_version: item.study_version, status: item.status, created_at: item.created_at, completed_at: item.completed_at, eligibility_status: store.reviews[item.id]?.eligibility_status || null }))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    sendJson(response, 200, { submissions });
+    return true;
+  }
+
+  if (pathname === "/admin/api/exports.csv" && request.method === "GET") {
+    const store = await readStore();
+    const columns = ["id", "study_id", "study_version", "status", "age_group", "biological_sex", "nationality", "language_background", "first_language", "second_languages", "mandarin_learning_years", "created_at", "completed_at", "eligibility_status", "review_notes"];
+    const cell = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const lines = Object.values(store.submissions).map((item) => {
+      const review = store.reviews[item.id] || {};
+      const row = { ...item.profile, ...item, second_languages: JSON.stringify(item.profile.second_languages), eligibility_status: review.eligibility_status, review_notes: review.notes };
+      return columns.map((column) => cell(row[column])).join(",");
+    });
+    response.writeHead(200, { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": "attachment; filename=anonymous-speech-export.csv", "Cache-Control": "no-store" });
+    response.end(`\uFEFF${columns.join(",")}\r\n${lines.join("\r\n")}`);
+    return true;
+  }
+
+  const adminAudioMatch = pathname.match(/^\/admin\/api\/submissions\/([^/]+)\/tasks\/([^/]+)\/audio$/);
+  if (adminAudioMatch && request.method === "GET") {
+    const [, submissionId, taskId] = adminAudioMatch;
+    const store = await readStore();
+    const recording = store.submissions[submissionId]?.recordings?.[taskId];
+    if (!recording) return sendJson(response, 404, { error: "找不到錄音。" }), true;
+    try {
+      const audio = await readFile(join(audioDirectory, recording.file));
+      const download = new URL(request.url, `http://${request.headers.host}`).searchParams.get("download") === "1";
+      response.writeHead(200, { "Content-Type": "audio/wav", "Cache-Control": "no-store", ...(download ? { "Content-Disposition": `attachment; filename="${submissionId}-${taskId}.wav"` } : {}) });
+      response.end(audio);
+    } catch { sendJson(response, 404, { error: "找不到音檔。" }); }
+    return true;
+  }
+
+  const adminReviewMatch = pathname.match(/^\/admin\/api\/submissions\/([^/]+)\/review$/);
+  if (adminReviewMatch && request.method === "PUT") {
+    const store = await readStore();
+    const submissionId = adminReviewMatch[1];
+    if (!store.submissions[submissionId]) return sendJson(response, 404, { error: "找不到匿名提交。" }), true;
+    try {
+      const payload = JSON.parse((await readBody(request, 8 * 1024)).toString("utf8"));
+      if (!["eligible", "ineligible", "undetermined"].includes(payload.eligibility_status)) return sendJson(response, 400, { error: "審核結果不正確。" }), true;
+      store.reviews[submissionId] = { eligibility_status: payload.eligibility_status, notes: String(payload.notes || "").trim().slice(0, 1000), reviewed_by: "local-researcher", reviewed_at: new Date().toISOString() };
+      await saveStore(store); sendJson(response, 200, { ok: true, reviewed_at: store.reviews[submissionId].reviewed_at });
+    } catch { sendJson(response, 400, { error: "審核內容格式不正確。" }); }
+    return true;
+  }
+
+  const adminSubmissionMatch = pathname.match(/^\/admin\/api\/submissions\/([^/]+)$/);
+  if (adminSubmissionMatch && request.method === "GET") {
+    const store = await readStore();
+    const item = store.submissions[adminSubmissionMatch[1]];
+    if (!item) return sendJson(response, 404, { error: "找不到匿名提交。" }), true;
+    const review = store.reviews[item.id] || {};
+    const submission = { ...item.profile, id: item.id, study_id: item.study_id, study_version: item.study_version, status: item.status, created_at: item.created_at, completed_at: item.completed_at, eligibility_status: review.eligibility_status, review_notes: review.notes };
+    const recordings = Object.entries(item.recordings).map(([task_id, recording]) => ({ task_id, ...recording }));
+    sendJson(response, 200, { submission, recordings });
+    return true;
+  }
+
   if (pathname === "/api/health" && request.method === "GET") {
     sendJson(response, 200, { ok: true, mode: "local" });
     return true;
@@ -165,7 +247,7 @@ async function handleApi(request, response, pathname) {
 }
 
 async function serveStatic(response, pathname) {
-  const requested = pathname === "/" ? "/index.html" : pathname;
+  const requested = pathname === "/" ? "/index.html" : pathname.endsWith("/") ? `${pathname}index.html` : pathname;
   const relativePath = normalize(decodeURIComponent(requested)).replace(/^([/\\])+/, "");
   const fullPath = join(publicDirectory, relativePath);
   if (!fullPath.startsWith(publicDirectory)) {

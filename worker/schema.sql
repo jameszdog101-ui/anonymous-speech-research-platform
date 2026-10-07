@@ -30,3 +30,24 @@ CREATE TABLE IF NOT EXISTS task_recordings (
 CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);
 CREATE INDEX IF NOT EXISTS idx_recordings_submission ON task_recordings(submission_id);
 
+CREATE TABLE IF NOT EXISTS submission_reviews (
+  submission_id TEXT PRIMARY KEY,
+  eligibility_status TEXT NOT NULL CHECK (eligibility_status IN ('eligible', 'ineligible', 'undetermined')),
+  notes TEXT NOT NULL DEFAULT '',
+  reviewed_by TEXT NOT NULL,
+  reviewed_at TEXT NOT NULL,
+  FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS researcher_audit_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  researcher_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  submission_id TEXT,
+  task_id TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_status ON submission_reviews(eligibility_status);
+CREATE INDEX IF NOT EXISTS idx_audit_created_at ON researcher_audit_log(created_at);
+
