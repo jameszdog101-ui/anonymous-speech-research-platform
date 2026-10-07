@@ -1,4 +1,10 @@
 const JSON_HEADERS = { "Content-Type": "application/json" };
+const STAGING_API_ORIGIN = "https://anonymous-speech-platform-api.jameszdog101.workers.dev";
+
+function apiUrl(path) {
+  const origin = window.location.hostname.endsWith(".pages.dev") ? STAGING_API_ORIGIN : "";
+  return `${origin}${path}`;
+}
 
 function assertLiveApi() {
   if (window.location.hostname.endsWith("github.io")) {
@@ -16,7 +22,7 @@ async function parseResponse(response) {
 
 export async function createSubmission(profile, studyConfig) {
   assertLiveApi();
-  const response = await fetch("/api/submissions", {
+  const response = await fetch(apiUrl("/api/submissions"), {
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify({
@@ -35,7 +41,7 @@ export async function uploadTransformedAudio(submissionId, task, transformedBlob
     throw new Error("安全檢查失敗：上傳模組只接受已轉換的 WAV 音檔。");
   }
 
-  const response = await fetch(`/api/submissions/${encodeURIComponent(submissionId)}/tasks/${encodeURIComponent(task.task_id)}/audio`, {
+  const response = await fetch(apiUrl(`/api/submissions/${encodeURIComponent(submissionId)}/tasks/${encodeURIComponent(task.task_id)}/audio`), {
     method: "PUT",
     headers: {
       "Content-Type": "audio/wav",
@@ -50,7 +56,7 @@ export async function uploadTransformedAudio(submissionId, task, transformedBlob
 
 export async function finalizeSubmission(submissionId) {
   assertLiveApi();
-  const response = await fetch(`/api/submissions/${encodeURIComponent(submissionId)}/finalize`, {
+  const response = await fetch(apiUrl(`/api/submissions/${encodeURIComponent(submissionId)}/finalize`), {
     method: "POST",
     headers: JSON_HEADERS,
     body: "{}"

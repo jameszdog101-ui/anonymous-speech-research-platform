@@ -197,6 +197,9 @@ test("GitHub Pages demo uses relative assets and blocks research uploads", async
   assert.doesNotMatch(config, /audio_stimulus:\s*"\//);
   assert.match(api, /hostname\.endsWith\("github\.io"\)/);
   assert.match(api, /不會建立或上傳研究資料/);
+  assert.match(api, /hostname\.endsWith\("\.pages\.dev"\)/);
+  assert.match(api, /anonymous-speech-platform-api\.jameszdog101\.workers\.dev/);
+  assert.match(api, /fetch\(apiUrl\(/);
 });
 
 test("researcher portal requires Access identity and audits sensitive actions", async () => {
