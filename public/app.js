@@ -12,7 +12,8 @@ const state = {
 
 const $ = (selector) => document.querySelector(selector);
 const elements = {
-  languageGate: $("#language-gate"), platformLanguage: $("#platform-language"), enterPlatform: $("#enter-platform"), translateStatus: $("#translate-status"),
+  languageGate: $("#language-gate"), platformLanguage: $("#platform-language"), enterPlatform: $("#enter-platform"),
+  changeLanguage: $("#change-language"), translateStatus: $("#translate-status"),
   alert: $("#global-alert"), consent: $("#consent"), consentNext: $("#consent-next"),
   profileForm: $("#profile-form"), profileNext: $("#profile-next"), addLanguage: $("#add-language"), secondLanguages: $("#second-languages"),
   panels: [...document.querySelectorAll("[data-step-panel]")], progress: [...document.querySelectorAll("#progress-list li")], taskProgressLabel: $("#task-progress-label"),
@@ -302,6 +303,10 @@ elements.enterPlatform.addEventListener("click", () => {
   document.cookie = `googtrans=/zh-TW/${language}; path=/; SameSite=Lax`;
   if (activateGoogleTranslation(language)) closeLanguageGate();
   else window.location.reload();
+});
+elements.changeLanguage.addEventListener("click", () => {
+  elements.languageGate.hidden = false;
+  document.body.classList.add("language-locked");
 });
 document.addEventListener("google-translate-ready", () => { elements.translateStatus.textContent = "選好語言後，按下方按鈕進入平台。"; });
 
