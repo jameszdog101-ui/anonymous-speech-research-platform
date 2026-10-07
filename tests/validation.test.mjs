@@ -69,8 +69,8 @@ test("biological sex maps to one fixed v2 transform profile", () => {
   assert.equal(transformProfileForSex("male"), "PROFILE_A_M");
   assert.equal(transformProfileForSex("female"), "PROFILE_A_F");
   assert.equal(transformProfileForSex("unknown"), null);
-  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_M.pitchSemitones, 6);
-  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.pitchSemitones, -6);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_M.pitchSemitones, 4);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.pitchSemitones, -4);
 });
 
 test("monolingual profiles may omit L2 but bilingual profiles may not", () => {
