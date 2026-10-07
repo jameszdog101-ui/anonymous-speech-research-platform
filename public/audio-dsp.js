@@ -149,8 +149,8 @@ export function transformSamples(samples, sampleRate, profile) {
   let output = timeStretchOla(resampled, pitchRatio, samples.length, profile.frameSize, profile.analysisHop);
 
   for (const center of profile.formantCentersHz) {
-    output = applyBiquad(output, sampleRate, "peaking", center, 1.2, -4.5);
-    output = applyBiquad(output, sampleRate, "peaking", center * profile.formantScale, 1.0, 5.5);
+    output = applyBiquad(output, sampleRate, "peaking", center, 1.2, profile.formantCutDb);
+    output = applyBiquad(output, sampleRate, "peaking", center * profile.formantScale, 1.0, profile.formantBoostDb);
   }
   output = applyModulatedDelay(output, sampleRate, profile.modulationDepthMs, profile.modulationRateHz);
   output = applyBiquad(output, sampleRate, "highpass", profile.highpassHz, 0.707);

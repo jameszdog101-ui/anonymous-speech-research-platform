@@ -13,12 +13,12 @@ export const BIOLOGICAL_SEXES = new Set(["male", "female"]);
 export const LANGUAGE_BACKGROUNDS = new Set(["monolingual", "bilingual", "multilingual"]);
 export const TASK_IDS = new Set(["task_001", "task_002"]);
 export const TRANSFORM_PROFILES = Object.freeze({
-  PROFILE_A_M: "2.0.0",
-  PROFILE_A_F: "2.0.0"
+  PROFILE_A_M: "2.1.0",
+  PROFILE_A_F: "2.1.0"
 });
 export const TRANSFORM_PARAMETER_SETS = Object.freeze({
-  PROFILE_A_M: Object.freeze({ pitchSemitones: 4, formantScale: 1.18, modulationDepthMs: 2.2, modulationRateHz: 4.7 }),
-  PROFILE_A_F: Object.freeze({ pitchSemitones: -4, formantScale: 0.84, modulationDepthMs: 2.6, modulationRateHz: 5.3 })
+  PROFILE_A_M: Object.freeze({ pitchSemitones: 6, formantScale: 1.28, formantCutDb: -6, formantBoostDb: 7, modulationDepthMs: 3.4, modulationRateHz: 5.1 }),
+  PROFILE_A_F: Object.freeze({ pitchSemitones: -6, formantScale: 0.78, formantCutDb: -6, formantBoostDb: 7, modulationDepthMs: 3.8, modulationRateHz: 5.7 })
 });
 export const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 
