@@ -111,3 +111,10 @@ test("device test previews transformed audio and privacy promises are explicit",
   assert.doesNotMatch(app, /createObjectURL\(rawBlob\)/);
 });
 
+test("second-language guidance remains readable after translation", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(html, /placeholder="例如：英語"/);
+  assert.match(html, /second-language-note/);
+  assert.doesNotMatch(html, /placeholder="[^"]*單語者可留白/);
+});
+
