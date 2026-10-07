@@ -19,12 +19,12 @@ const elements = {
   panels: [...document.querySelectorAll("[data-step-panel]")], progress: [...document.querySelectorAll("#progress-list li")], taskProgressLabel: $("#task-progress-label"),
   devicePlay: $("#device-play"), deviceRecord: $("#device-record"), deviceStatus: $("#device-status"), deviceHelp: $("#device-help"),
   deviceTime: $("#device-time"), devicePreview: $("#device-preview"), deviceConfirm: $("#device-confirm"), deviceNext: $("#device-next"),
-  taskCount: $("#task-count"), taskTitle: $("#task-title"), taskStatus: $("#task-status"), taskPrompt: $("#task-prompt"),
+  taskCount: $("#task-count"), taskTitle: $("#task-title"), taskStatus: $("#task-status"),
   taskInstructions: $("#task-instructions"), playbackPolicy: $("#playback-policy"), stimulusAudio: $("#stimulus-audio"),
   stimulusTime: $("#stimulus-time"), playStimulus: $("#play-stimulus"), recordButton: $("#record-button"), recordAttempts: $("#record-attempts"),
   recordLabel: $("#record-label"), recordHelp: $("#record-help"), recordTime: $("#record-time"), processingRow: $("#processing-row"),
   previewRow: $("#preview-row"), processedPreview: $("#processed-preview"), rerecordButton: $("#rerecord-button"),
-  taskBack: $("#task-back"), taskNext: $("#task-next"), receiptId: $("#receipt-id")
+  taskBack: $("#task-back"), taskNext: $("#task-next"), downloadProof: $("#download-proof")
 };
 
 document.body.classList.add("language-locked");
@@ -92,9 +92,8 @@ function renderTask() {
   resetPreview();
   const task = currentTask();
   validateTaskConfiguration(task);
-  elements.taskCount.textContent = `問答任務 ${state.taskIndex + 1} / ${STUDY_CONFIG.tasks.length}`;
+  elements.taskCount.textContent = `口說任務 ${state.taskIndex + 1} / ${STUDY_CONFIG.tasks.length}`;
   elements.taskTitle.textContent = task.title;
-  elements.taskPrompt.textContent = task.prompt_text;
   elements.taskInstructions.textContent = task.research_instructions;
   elements.stimulusAudio.src = task.audio_stimulus;
   elements.stimulusTime.textContent = "00:00";
@@ -195,8 +194,7 @@ async function saveCurrentTask() {
     await uploadTransformedAudio(state.submissionId, task, audio, STUDY_CONFIG.transformProfile);
     if (state.taskIndex < STUDY_CONFIG.tasks.length - 1) { state.taskIndex += 1; renderTask(); }
     else {
-      const result = await finalizeSubmission(state.submissionId);
-      elements.receiptId.textContent = result.receipt_id || state.submissionId;
+      await finalizeSubmission(state.submissionId);
       setStep(4);
     }
   } catch (error) {
@@ -279,6 +277,49 @@ function addSecondLanguageField() {
   row.append(input, remove);
   elements.secondLanguages.append(row);
   input.focus();
+}
+
+function downloadCompletionProof() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 750;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#f4f1ea";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#fffefa";
+  context.fillRect(80, 70, 1040, 610);
+  context.fillStyle = "#176b51";
+  context.fillRect(80, 70, 1040, 12);
+  context.fillRect(150, 145, 70, 70);
+  context.fillStyle = "#ffffff";
+  context.font = "700 36px sans-serif";
+  context.textAlign = "center";
+  context.fillText("聲", 185, 194);
+  context.fillStyle = "#176b51";
+  context.font = "700 24px sans-serif";
+  context.textAlign = "left";
+  context.fillText("匿名語音研究 / Anonymous Speech Research", 250, 176);
+  context.fillStyle = "#1d2925";
+  context.font = "700 56px serif";
+  context.textAlign = "center";
+  context.fillText("完成證明 / Completion Confirmation", 600, 320);
+  context.fillStyle = "#176b51";
+  context.font = "700 42px sans-serif";
+  context.fillText("已完成 / Completed", 600, 410);
+  context.fillStyle = "#637069";
+  context.font = "24px sans-serif";
+  context.fillText("本證明不含提交編號、個人資料或研究內容。", 600, 505);
+  context.font = "20px sans-serif";
+  context.fillText("Contains no submission ID, personal data, or study response.", 600, 548);
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "speech-study-completion.png";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, "image/png");
 }
 
 function closeLanguageGate() {
@@ -379,6 +420,7 @@ elements.taskBack.addEventListener("click", () => {
   else setStep(2);
 });
 elements.taskNext.addEventListener("click", saveCurrentTask);
+elements.downloadProof.addEventListener("click", downloadCompletionProof);
 window.addEventListener("beforeunload", () => {
   stopMediaTracks(); stopDeviceTracks();
   if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);

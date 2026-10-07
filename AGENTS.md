@@ -86,6 +86,8 @@ Formal upload and storage rule:
 - D1 stores permitted participant fields, task/submission metadata, object references, timestamps, status, and transformation version; it does not store audio blobs.
 - Avoid putting participant responses or identifying values in URLs, filenames, logs, or client-visible error traces.
 - If transformation fails, block submission and clearly tell the participant that no raw recording was uploaded.
+- Do not render the submission UUID on the completion screen or include it in completion-proof images. Returning a UUID screenshot through an identified channel could link a person to their research record.
+- Completion-proof images are generated locally and contain no UUID, timestamp, profile data, or response data.
 
 Treat this as a core system invariant, not optional UI wording.
 

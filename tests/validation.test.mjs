@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { STUDY_CONFIG } from "../public/study-config.js";
 import {
   TRANSFORM_PROFILE,
@@ -11,9 +12,9 @@ import {
 
 const validProfile = {
   age_group: "18_24",
-  nationality: "臺灣",
+  nationality: "日本",
   language_background: "bilingual",
-  first_language: "華語",
+  first_language: "中文（普通話）",
   second_languages: ["英語", "日語"],
   mandarin_learning_years: 8
 };
@@ -76,5 +77,14 @@ test("monolingual profiles may omit L2 but bilingual profiles may not", () => {
 test("recognizes a WAV container signature", () => {
   assert.equal(hasWavHeader(Buffer.from("RIFF0000WAVE", "ascii")), true);
   assert.equal(hasWavHeader(Buffer.from("not audio", "ascii")), false);
+});
+
+test("completion UI and proof do not expose the submission UUID", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.doesNotMatch(html, /receipt-id|匿名提交編號/);
+  assert.match(html, /download-proof/);
+  assert.match(app, /Contains no submission ID/);
+  assert.doesNotMatch(app, /receipt_id/);
 });
 

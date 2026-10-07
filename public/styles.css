@@ -195,7 +195,7 @@ h1 { max-width: 680px; margin: 0; font-family: Georgia, "Noto Serif TC", serif; 
 .status-pill.ready { background: #dcefe6; color: var(--green-dark); }
 .task-rule { margin: 26px 0; padding: 20px 22px; border-left: 4px solid var(--coral); background: var(--coral-soft); }
 .task-rule strong { font-family: Georgia, "Noto Serif TC", serif; font-size: 21px; }
-.task-rule p { margin: 8px 0 0; color: #70564f; line-height: 1.6; }
+.task-rule p { margin: 0; color: #70564f; line-height: 1.6; }
 .stimulus-strip { display: grid; grid-template-columns: 145px 42px 1fr 50px; align-items: center; gap: 14px; min-height: 82px; padding: 14px 18px; border: 1px solid var(--line); }
 .stimulus-strip > div:first-child { display: grid; gap: 5px; }
 .stimulus-strip p { margin: 0; color: var(--muted); font-size: 12px; }
@@ -227,9 +227,11 @@ h1 { max-width: 680px; margin: 0; font-family: Georgia, "Noto Serif TC", serif; 
 .completion { text-align: center; padding: 45px 0; }
 .completion .lead { margin-left: auto; margin-right: auto; }
 .success-mark { display: grid; place-items: center; width: 62px; height: 62px; margin: 0 auto 24px; color: white; background: var(--green); border-radius: 50%; font-size: 28px; }
-.receipt { display: inline-grid; gap: 8px; min-width: min(420px, 100%); padding: 20px; border: 1px solid var(--line); background: #f6f7f2; }
-.receipt span { color: var(--muted); font-size: 12px; }
-.receipt strong { font-family: ui-monospace, monospace; font-size: 16px; word-break: break-all; }
+.completion-proof { display: inline-grid; gap: 8px; min-width: min(440px, 100%); padding: 22px; border: 1px solid var(--line); background: #f6f7f2; }
+.completion-proof span { color: var(--muted); font-size: 12px; }
+.completion-proof strong { color: var(--green-dark); font-family: Georgia, "Noto Serif TC", serif; font-size: 24px; }
+.completion-proof p { max-width: 360px; margin: 4px auto 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.proof-button { display: block; margin: 18px auto 0; }
 .finish-note { color: var(--muted); font-size: 13px; }
 
 .device-grid { display: grid; gap: 14px; margin: 30px 0 18px; }

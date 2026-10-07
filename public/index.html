@@ -58,7 +58,7 @@
           <li class="is-active" data-step="0"><span>1</span><div><strong>研究說明</strong><small>閱讀並同意</small></div></li>
           <li data-step="1"><span>2</span><div><strong>背景資料</strong><small>不含身分資訊</small></div></li>
           <li data-step="2"><span>3</span><div><strong>設備測試</strong><small>確認播放與錄音</small></div></li>
-          <li data-step="3"><span>4</span><div><strong>問答任務</strong><small id="task-progress-label">2 題</small></div></li>
+          <li data-step="3"><span>4</span><div><strong>口說任務</strong><small id="task-progress-label">2 題</small></div></li>
           <li data-step="4"><span>5</span><div><strong>完成提交</strong><small>取得匿名編號</small></div></li>
         </ol>
         <div class="privacy-note">
@@ -122,7 +122,7 @@
             </label>
             <label>
               <span>國籍</span>
-              <input name="nationality" maxlength="60" placeholder="例如：臺灣" autocomplete="country-name" required>
+              <input name="nationality" maxlength="60" placeholder="例如：日本" autocomplete="country-name" required>
               <small class="field-help">請填國家或地區名稱，不需填居住地址。</small>
             </label>
             <label>
@@ -137,7 +137,7 @@
             </label>
             <label>
               <span>第一語言</span>
-              <input name="first_language" maxlength="40" placeholder="例如：華語" autocomplete="off" required>
+              <input name="first_language" maxlength="40" placeholder="例如：中文（普通話）" autocomplete="off" required>
               <small class="field-help">第一語言（L1）是你最早自然習得、通常從小在家庭中使用的語言。</small>
             </label>
             <fieldset class="language-fields full-width">
@@ -152,7 +152,7 @@
             </fieldset>
             <label class="full-width">
               <span>華語／漢語／中文／普通話學習時間（年）</span>
-              <input name="mandarin_learning_years" type="number" min="0" max="80" step="0.5" inputmode="decimal" placeholder="未學習請填 0" required>
+              <input name="mandarin_learning_years" type="number" min="0" max="80" step="0.5" inputmode="decimal" placeholder="例如：1.5" required>
               <small class="field-help">請填累計學習年數，可使用 0.5 表示半年。</small>
             </label>
           </form>
@@ -213,7 +213,6 @@
             <span id="task-status" class="status-pill">尚未錄音</span>
           </div>
           <div class="task-rule">
-            <strong id="task-prompt"></strong>
             <p id="task-instructions"></p>
           </div>
 
@@ -259,11 +258,13 @@
           <p class="eyebrow">提交完成</p>
           <h1>謝謝你的參與</h1>
           <p class="lead">資料已以匿名編號儲存。伺服器只收到轉換後的語音檔與允許的背景資料。</p>
-          <div class="receipt">
-            <span>匿名提交編號</span>
-            <strong id="receipt-id">—</strong>
+          <div class="completion-proof">
+            <span>完成狀態</span>
+            <strong>已完成</strong>
+            <p>為維持匿名性，此畫面與完成證明不顯示提交編號或個人資料。</p>
           </div>
-          <p class="finish-note">你現在可以安全地關閉這個頁面。</p>
+          <button id="download-proof" class="button button-primary proof-button" type="button">下載完成證明圖片</button>
+          <p class="finish-note">下載後可回傳完成證明，接著安全地關閉這個頁面。</p>
         </section>
       </section>
     </main>

@@ -6,6 +6,8 @@
 
 Raw microphone recordings stay in browser memory. Only a locally transformed `audio/wav` object is passed to the upload client. The Worker validates the transformed-audio headers before writing to R2; D1 stores metadata only.
 
+The completion page does not expose the internal submission UUID. Its downloadable PNG proof is generated locally and contains no UUID, timestamp, participant profile, or response data, preventing a returned proof from directly identifying the corresponding research record.
+
 `PROFILE_A` is a test profile, not a guarantee of irreversible anonymity. Its production algorithm and parameters require research and ethics review.
 
 ## Run locally
