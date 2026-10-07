@@ -14,3 +14,7 @@ database_id = "629bd064-2df8-413c-bcc0-6f46dfe3bdd3"
 binding = "AUDIO"
 bucket_name = "anonymous-speech-audio-staging"
 
+[assets]
+directory = "./public"
+run_worker_first = ["/api/*", "/admin/api/*"]
+

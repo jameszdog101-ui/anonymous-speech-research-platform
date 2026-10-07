@@ -242,3 +242,10 @@ test("study collection has a server-enforced cap and manual control", async () =
   assert.match(client, /api\/study-status/);
 });
 
+test("researcher UI is deployed with the Worker while admin APIs run through authentication", async () => {
+  const config = await readFile(new URL("../wrangler.toml", import.meta.url), "utf8");
+  assert.match(config, /\[assets\][\s\S]*directory = "\.\/public"/);
+  assert.match(config, /run_worker_first = \["\/api\/\*", "\/admin\/api\/\*"\]/);
+  assert.doesNotMatch(config, /PROJECT_OWNER_EMAIL|jameszdog101@gmail\.com/);
+});
+
