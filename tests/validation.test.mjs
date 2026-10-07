@@ -129,3 +129,17 @@ test("language recovery controls remain readable in every translation", async ()
   assert.match(app, /language === "zh-TW"[\s\S]*window\.location\.reload\(\)/);
 });
 
+test("brand mark is graphical and cannot be translated", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const logo = await readFile(new URL("../public/assets/research-mark.svg", import.meta.url), "utf8");
+  const server = await readFile(new URL("../scripts/dev-server.mjs", import.meta.url), "utf8");
+
+  assert.equal((html.match(/research-mark\.svg/g) || []).length, 2);
+  assert.doesNotMatch(html, /class="brand-mark[^>]*>聲</);
+  assert.doesNotMatch(app, /fillText\("聲"/);
+  assert.match(logo, /<svg/);
+  assert.doesNotMatch(logo, /<text/);
+  assert.match(server, /"\.svg": "image\/svg\+xml/);
+});
+

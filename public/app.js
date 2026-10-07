@@ -305,6 +305,46 @@ function addSecondLanguageField() {
   input.focus();
 }
 
+function drawResearchMark(context, x, y, size) {
+  const scale = size / 64;
+  context.save();
+  context.translate(x, y);
+  context.scale(scale, scale);
+  context.fillStyle = "#176b51";
+  context.fillRect(0, 0, 64, 64);
+  context.lineWidth = 4;
+  context.lineCap = "round";
+  [[18, 32, 27, "#ffffff"], [25, 34, 21, "#e4b84d"], [32, 35, 14, "#ffffff"], [39, 34, 20, "#d65c45"], [46, 32, 26, "#ffffff"]].forEach(([lineX, bottom, top, color]) => {
+    context.strokeStyle = color;
+    context.beginPath();
+    context.moveTo(lineX, bottom);
+    context.lineTo(lineX, top);
+    context.stroke();
+  });
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.moveTo(10, 40);
+  context.bezierCurveTo(18, 38, 25, 40, 32, 45);
+  context.lineTo(32, 55);
+  context.bezierCurveTo(25, 50, 18, 48, 10, 50);
+  context.closePath();
+  context.fill();
+  context.beginPath();
+  context.moveTo(54, 40);
+  context.bezierCurveTo(46, 38, 39, 40, 32, 45);
+  context.lineTo(32, 55);
+  context.bezierCurveTo(39, 50, 46, 48, 54, 50);
+  context.closePath();
+  context.fill();
+  context.strokeStyle = "#176b51";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(32, 45);
+  context.lineTo(32, 55);
+  context.stroke();
+  context.restore();
+}
+
 function downloadCompletionProof() {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -316,11 +356,7 @@ function downloadCompletionProof() {
   context.fillRect(80, 70, 1040, 610);
   context.fillStyle = "#176b51";
   context.fillRect(80, 70, 1040, 12);
-  context.fillRect(150, 145, 70, 70);
-  context.fillStyle = "#ffffff";
-  context.font = "700 36px sans-serif";
-  context.textAlign = "center";
-  context.fillText("聲", 185, 194);
+  drawResearchMark(context, 150, 145, 70);
   context.fillStyle = "#176b51";
   context.font = "700 24px sans-serif";
   context.textAlign = "left";
