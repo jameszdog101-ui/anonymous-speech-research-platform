@@ -7,7 +7,7 @@ const state = {
   processedAudio: new Map(), stimulusPlays: new Map(), recordingAttempts: new Map(),
   previewUrl: null, mediaRecorder: null, mediaStream: null, recordingChunks: [], recordTimer: null, recordingStartedAt: 0,
   devicePlayed: false, deviceRecorded: false, deviceRecorder: null, deviceStream: null,
-  deviceChunks: [], deviceTimer: null, deviceStartedAt: 0, devicePreviewUrl: null
+  deviceChunks: [], deviceTimer: null, deviceStartedAt: 0, devicePreviewUrl: null, deviceProcessedAudio: null
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -17,8 +17,8 @@ const elements = {
   alert: $("#global-alert"), consent: $("#consent"), consentNext: $("#consent-next"),
   profileForm: $("#profile-form"), profileNext: $("#profile-next"), addOtherLanguage: $("#add-other-language"), otherLanguages: $("#other-languages"),
   panels: [...document.querySelectorAll("[data-step-panel]")], progress: [...document.querySelectorAll("#progress-list li")], taskProgressLabel: $("#task-progress-label"),
-  devicePlay: $("#device-play"), deviceRecord: $("#device-record"), deviceStatus: $("#device-status"), deviceHelp: $("#device-help"),
-  deviceTime: $("#device-time"), devicePreview: $("#device-preview"), deviceConfirm: $("#device-confirm"), deviceNext: $("#device-next"),
+  devicePlay: $("#device-play"), deviceAudio: $("#device-audio"), deviceRecord: $("#device-record"), deviceStatus: $("#device-status"), deviceHelp: $("#device-help"),
+  deviceTime: $("#device-time"), devicePreview: $("#device-preview"), deviceHeardConfirm: $("#device-heard-confirm"), deviceNext: $("#device-next"),
   taskCount: $("#task-count"), taskTitle: $("#task-title"), taskStatus: $("#task-status"),
   taskInstructions: $("#task-instructions"), playbackPolicy: $("#playback-policy"), stimulusAudio: $("#stimulus-audio"),
   stimulusTime: $("#stimulus-time"), playStimulus: $("#play-stimulus"), recordButton: $("#record-button"), recordAttempts: $("#record-attempts"),
@@ -210,23 +210,20 @@ async function saveCurrentTask() {
 }
 
 function updateDeviceReadyState() {
-  const ready = state.devicePlayed && state.deviceRecorded;
-  elements.deviceConfirm.disabled = !ready;
+  elements.deviceHeardConfirm.disabled = !state.devicePlayed;
+  const ready = state.devicePlayed && elements.deviceHeardConfirm.checked && state.deviceRecorded && state.deviceProcessedAudio;
+  elements.deviceNext.disabled = !ready;
   if (ready) {
-    elements.deviceStatus.textContent = "去識別化測試已完成";
-    elements.deviceHelp.textContent = "請播放轉換後的錄音確認效果，然後勾選下方確認。";
+    elements.deviceStatus.textContent = "設備與資格確認已完成";
+    elements.deviceHelp.textContent = "可播放去識別化預覽；繼續後只上傳這個轉換版本。";
   }
 }
-function playDevicePrompt() {
-  if (!("speechSynthesis" in window)) { showAlert("此瀏覽器無法產生設備測試語句，請改用最新版 Chrome、Edge 或 Safari。"); return; }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance("請從數字一數到十");
-  utterance.lang = "zh-TW";
-  utterance.rate = 0.85;
-  utterance.addEventListener("start", () => { state.devicePlayed = true; elements.devicePlay.textContent = "Ⅱ"; updateDeviceReadyState(); });
-  utterance.addEventListener("end", () => { elements.devicePlay.textContent = "▶"; });
-  utterance.addEventListener("error", () => { elements.devicePlay.textContent = "▶"; showAlert("設備測試語句播放失敗，請確認裝置音量後重試。"); });
-  window.speechSynthesis.speak(utterance);
+async function playDeviceMusic() {
+  if (!elements.deviceAudio.paused) { elements.deviceAudio.pause(); return; }
+  clearAlert();
+  elements.deviceAudio.currentTime = 0;
+  try { await elements.deviceAudio.play(); }
+  catch { showAlert("測試音樂無法播放，請確認裝置音量或改用最新版瀏覽器後重試。"); }
 }
 function stopDeviceTracks() { state.deviceStream?.getTracks().forEach((track) => track.stop()); state.deviceStream = null; }
 function stopDeviceRecording() {
@@ -240,14 +237,13 @@ async function startDeviceRecording() {
   assertRecordingSupport();
   clearAlert();
   state.deviceRecorded = false;
-  elements.deviceConfirm.checked = false;
-  elements.deviceConfirm.disabled = true;
-  elements.deviceNext.disabled = true;
+  state.deviceProcessedAudio = null;
+  updateDeviceReadyState();
   elements.devicePreview.hidden = true;
   if (state.devicePreviewUrl) URL.revokeObjectURL(state.devicePreviewUrl);
   state.devicePreviewUrl = null;
   elements.devicePreview.removeAttribute("src");
-  state.deviceStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  state.deviceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
   state.deviceChunks = [];
   const mimeType = selectRecorderMimeType();
   state.deviceRecorder = mimeType ? new MediaRecorder(state.deviceStream, { mimeType }) : new MediaRecorder(state.deviceStream);
@@ -256,12 +252,12 @@ async function startDeviceRecording() {
   state.deviceRecorder.start(250);
   state.deviceStartedAt = Date.now();
   elements.deviceRecord.classList.add("is-recording");
-  elements.deviceStatus.textContent = "設備測試錄音中";
-  elements.deviceHelp.textContent = "請從一數到十，再按一次停止";
+  elements.deviceStatus.textContent = "第一語言錄音中";
+  elements.deviceHelp.textContent = "請自然描述今天早上、中午和晚上的天氣，再按一次停止。";
   state.deviceTimer = setInterval(() => {
     const elapsed = (Date.now() - state.deviceStartedAt) / 1000;
     elements.deviceTime.textContent = formatTime(elapsed);
-    if (elapsed >= 15) stopDeviceRecording();
+    if (elapsed >= 20) stopDeviceRecording();
   }, 200);
 }
 async function finishDeviceRecording() {
@@ -277,10 +273,12 @@ async function finishDeviceRecording() {
     state.devicePreviewUrl = URL.createObjectURL(transformedBlob);
     elements.devicePreview.src = state.devicePreviewUrl;
     elements.devicePreview.hidden = false;
+    state.deviceProcessedAudio = transformedBlob;
     state.deviceRecorded = true;
     updateDeviceReadyState();
   } catch (error) {
     state.deviceRecorded = false;
+    state.deviceProcessedAudio = null;
     elements.deviceStatus.textContent = "去識別化處理失敗";
     elements.deviceHelp.textContent = "原始測試錄音未上傳也未保存，請重新錄製。";
     showAlert(`${error.message} 原始測試錄音未上傳或保存。`);
@@ -435,26 +433,40 @@ elements.profileNext.addEventListener("click", () => {
   };
   setStep(2);
 });
-elements.devicePlay.addEventListener("click", playDevicePrompt);
+elements.devicePlay.addEventListener("click", playDeviceMusic);
+elements.deviceAudio.addEventListener("play", () => { elements.devicePlay.textContent = "Ⅱ"; });
+elements.deviceAudio.addEventListener("pause", () => { elements.devicePlay.textContent = "▶"; });
+elements.deviceAudio.addEventListener("ended", () => {
+  state.devicePlayed = true;
+  elements.devicePlay.textContent = "▶";
+  elements.deviceHeardConfirm.disabled = false;
+  if (!state.deviceRecorded) {
+    elements.deviceStatus.textContent = "測試音樂播放完成";
+    elements.deviceHelp.textContent = "若能清楚聽見，請勾選確認，再完成第一語言錄音。";
+  }
+  updateDeviceReadyState();
+});
+elements.deviceAudio.addEventListener("error", () => { showAlert("測試音樂載入失敗，請重新整理頁面後再試。"); });
 elements.deviceRecord.addEventListener("click", async () => {
   if (state.deviceRecorder?.state === "recording") { stopDeviceRecording(); return; }
   try { await startDeviceRecording(); }
   catch (error) { stopDeviceTracks(); showAlert(error.name === "NotAllowedError" ? "無法使用麥克風。請允許麥克風權限後再試。" : error.message); }
 });
-elements.deviceConfirm.addEventListener("change", () => { elements.deviceNext.disabled = !elements.deviceConfirm.checked; });
+elements.deviceHeardConfirm.addEventListener("change", updateDeviceReadyState);
 elements.deviceNext.addEventListener("click", async () => {
-  if (!elements.deviceConfirm.checked || !state.profile) return;
+  if (!elements.deviceHeardConfirm.checked || !state.deviceProcessedAudio || !state.profile) return;
   elements.deviceNext.disabled = true;
-  elements.deviceNext.textContent = "正在建立匿名工作階段…";
+  elements.deviceNext.textContent = "正在上傳去識別化資格錄音…";
   try {
     const result = await createSubmission(state.profile, STUDY_CONFIG);
     state.submissionId = result.submission_id;
+    await uploadTransformedAudio(state.submissionId, STUDY_CONFIG.eligibilityTask, state.deviceProcessedAudio, activeTransformProfile());
     setStep(3);
     renderTask();
   } catch (error) {
     showAlert(error.message);
     elements.deviceNext.disabled = false;
-    elements.deviceNext.textContent = "重新開始正式問答 →";
+    elements.deviceNext.textContent = "重新上傳資格錄音並繼續 →";
   }
 });
 

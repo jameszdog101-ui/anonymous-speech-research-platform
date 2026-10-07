@@ -42,5 +42,6 @@ function createCueWav(frequencies) {
 await mkdir(outputDirectory, { recursive: true });
 await writeFile(`${outputDirectory}/stimulus-01.wav`, createCueWav([523.25, 659.25]));
 await writeFile(`${outputDirectory}/stimulus-02.wav`, createCueWav([659.25, 523.25, 440]));
-console.log("Generated two demo cue WAV files in public/assets.");
+await writeFile(`${outputDirectory}/device-test-music.wav`, createCueWav([523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46, 523.25]));
+console.log("Generated two demo cues and one device-test melody in public/assets.");
 

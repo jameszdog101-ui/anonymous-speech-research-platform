@@ -12,7 +12,7 @@ export const AGE_GROUPS = new Set(["under_18", "18_24", "25_34", "35_44", "45_54
 export const BIOLOGICAL_SEXES = new Set(["male", "female"]);
 export const LANGUAGE_BACKGROUNDS = new Set(["bilingual", "multilingual"]);
 export const REQUIRED_SECOND_LANGUAGE = "中文（普通話）";
-export const TASK_IDS = new Set(["task_001", "task_002"]);
+export const TASK_IDS = new Set(["eligibility_001", "task_001", "task_002"]);
 export const TRANSFORM_PROFILES = Object.freeze({
   PROFILE_A_M: "2.0.1",
   PROFILE_A_F: "2.0.1"

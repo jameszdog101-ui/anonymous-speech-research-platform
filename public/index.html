@@ -57,7 +57,7 @@
         <ol id="progress-list" class="progress-list">
           <li class="is-active" data-step="0"><span>1</span><div><strong>研究說明</strong><small>閱讀並同意</small></div></li>
           <li data-step="1"><span>2</span><div><strong>背景資料</strong><small>不含身分資訊</small></div></li>
-          <li data-step="2"><span>3</span><div><strong>設備測試</strong><small>確認播放與錄音</small></div></li>
+          <li data-step="2"><span>3</span><div><strong>設備與資格</strong><small>確認播放與第一語言</small></div></li>
           <li data-step="3"><span>4</span><div><strong>口說任務</strong><small id="task-progress-label">2 題</small></div></li>
           <li data-step="4"><span>5</span><div><strong>完成提交</strong><small>取得匿名編號</small></div></li>
         </ol>
@@ -73,7 +73,7 @@
         <section class="step is-visible" data-step-panel="0">
           <p class="eyebrow">開始前請先閱讀</p>
           <h1>語音感知與產出研究</h1>
-          <p class="lead">本測試將請你聆聽短音檔並錄下口語回應，約需 3–5 分鐘。這是技術測試版本，正式研究說明與倫理審查文字仍會另行確認。</p>
+          <p class="lead">本測試將請你聆聽短音檔並錄下口語回應，約需 3–5 分鐘。去識別化後的第一語言資格確認錄音與正式作答將上傳供研究分析；原始錄音不會離開你的裝置。</p>
 
           <div class="info-grid">
             <article>
@@ -84,7 +84,7 @@
             <article>
               <span class="info-icon" aria-hidden="true">02</span>
               <h2>裝置內轉換</h2>
-              <p>原始錄音只在你的瀏覽器記憶體中處理，不會送往伺服器。</p>
+              <p>原始錄音只在瀏覽器記憶體中處理；伺服器只接收去識別化後的音檔。</p>
             </article>
             <article>
               <span class="info-icon" aria-hidden="true">03</span>
@@ -95,7 +95,7 @@
 
           <label class="consent-row">
             <input id="consent" type="checkbox">
-            <span><strong>我已閱讀上述測試說明，並同意參與。</strong><small>正式上線前將替換為經核准的研究同意文字。</small></span>
+            <span><strong>我已閱讀上述說明，並同意上傳去識別化後的資格確認錄音與正式作答。</strong><small>研究者將使用資格確認錄音，確認你是否以填寫的第一語言自然表達並檢查錄音品質；錄音不會用於訓練 AI。</small></span>
           </label>
           <div class="actions actions-end">
             <button id="consent-next" class="button button-primary" type="button" disabled>下一步 <span aria-hidden="true">→</span></button>
@@ -170,13 +170,13 @@
 
         <section class="step" data-step-panel="2">
           <p class="eyebrow">正式測驗前</p>
-          <h1>設備測試</h1>
-          <p class="lead">正式題目中的問題播放與作答錄音各只能操作兩次。請先在這裡確認喇叭與麥克風可以正常使用；設備測試內容不會上傳。</p>
+          <h1>設備與資格確認</h1>
+          <p class="lead">請先確認喇叭與麥克風可以正常使用，再完成一段簡短的第一語言口說錄音。正式題目中的問題播放與作答錄音各只能操作兩次。</p>
 
           <div class="privacy-assurance" role="note" aria-label="聲音去識別化說明">
             <strong>你的聲音會先去識別化</strong>
-            <p>回放聽起來不像自己的聲音，是正常現象。原始錄音不會上傳或保存，本研究也不會將任何錄音用於訓練 AI。</p>
-            <small>設備測試只在此裝置內處理與播放；去識別化用於降低聲音被辨識的風險。</small>
+            <p>回放聽起來不像自己的聲音，是正常現象。原始錄音不會上傳或保存；去識別化後的資格確認錄音會上傳供研究者確認第一語言使用情況與錄音品質。</p>
+            <small>研究者只會用這段錄音確認你是否以填寫的第一語言自然表達，並檢查錄音品質；不會用於訓練 AI。去識別化用於降低聲音被辨識的風險。</small>
           </div>
 
           <div class="device-grid">
@@ -184,34 +184,36 @@
               <div class="device-number">01</div>
               <div>
                 <h2>測試聲音播放</h2>
-                <p>按下播放後，你應該會聽到：「請從數字一數到十」。</p>
+                <p>按下播放後，你會聽到一段約 4 秒的測試音樂。</p>
               </div>
-              <button id="device-play" class="round-button" type="button" aria-label="播放設備測試語句" title="播放設備測試語句">▶</button>
+              <button id="device-play" class="round-button" type="button" aria-label="播放設備測試音樂" title="播放設備測試音樂">▶</button>
+              <label class="device-heard-confirm">
+                <input id="device-heard-confirm" type="checkbox" disabled>
+                <span>我能清楚聽到測試音樂。</span>
+              </label>
             </article>
             <article class="device-card">
               <div class="device-number">02</div>
               <div>
-                <h2>測試麥克風錄音</h2>
-                <p>請使用麥克風從一數到十，再播放去識別化後的測試錄音確認效果。</p>
+                <h2>第一語言口說錄音</h2>
+                <span class="plain-language-note">白話說明：你的母語，也就是你從小最自然、最常使用的語言</span>
+                <p>請使用你的母語自然流利地簡短描述今天早上、中午和晚上的天氣，不要使用正在學習的中文。約 10–20 秒即可。</p>
               </div>
               <button id="device-record" class="record-button compact" type="button" aria-label="開始設備測試錄音" title="開始設備測試錄音"><span></span></button>
             </article>
           </div>
+          <audio id="device-audio" src="/assets/device-test-music.wav" preload="auto" hidden></audio>
           <div class="device-result">
             <div>
               <strong id="device-status">尚未完成設備測試</strong>
-              <small id="device-help">請先播放指示，再錄製一段測試語音。</small>
+              <small id="device-help">請先播放測試音樂，再完成第一語言口說錄音。</small>
             </div>
             <time id="device-time">00:00</time>
             <audio id="device-preview" controls hidden></audio>
           </div>
-          <label class="device-confirm">
-            <input id="device-confirm" type="checkbox" disabled>
-            <span>我已聽到播放內容，也能播放去識別化後的測試錄音。</span>
-          </label>
           <div class="actions">
             <button class="button button-quiet" type="button" data-back="1"><span aria-hidden="true">←</span> 返回背景資料</button>
-            <button id="device-next" class="button button-primary" type="button" disabled>開始正式問答 <span aria-hidden="true">→</span></button>
+            <button id="device-next" class="button button-primary" type="button" disabled>上傳資格錄音並開始正式問答 <span aria-hidden="true">→</span></button>
           </div>
         </section>
 

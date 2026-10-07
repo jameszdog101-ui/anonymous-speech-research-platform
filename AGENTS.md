@@ -68,7 +68,7 @@ Stimulus files may be MP3 or WAV. Validate supported browser playback and show a
 
 The play-once and replay-allowed fields describe the same playback policy and must not be allowed to contradict one another. In the current MVP, each question may be played at most twice and each answer may be recorded at most twice. Prefer a single canonical policy in code, while preserving both requested concepts in configuration/API mapping if needed.
 
-Before formal tasks begin, participants must complete a local device test. The browser speaks "請從數字一數到十", the participant records themselves counting from one to ten, and the recording is transformed with the same sex-specific PROFILE_A v2 settings before being played back locally. Device-test audio, whether raw or transformed, must never be uploaded or persisted.
+Before formal tasks begin, participants must complete a device and language-eligibility check. The browser plays an approximately four-second local melody and the participant must confirm they can hear it. The participant then uses their self-reported first language to naturally describe the morning, noon, and evening weather for roughly 10–20 seconds. The browser transforms the recording with the same sex-specific PROFILE_A v2.0.1 settings and locally previews it. Only the transformed WAV is uploaded as task `eligibility_001`; the raw recording must never be uploaded or persisted. Participants must be told that researchers use the transformed eligibility recording to check first-language use and recording quality. Do not claim or infer nationality from the recording.
 
 The initial screen provides a platform-language choice through Google Translate. Traditional Chinese remains available as the source-language fallback if the external translation service is unavailable.
 
@@ -76,11 +76,11 @@ The initial screen provides a platform-language choice through Google Translate.
 
 Use the fixed versioned `PROFILE_A v2.0.1` algorithm with two user-selected biological-sex sub-profiles. `PROFILE_A_M` applies the male-path parameters and `PROFILE_A_F` applies the female-path parameters. Participants cannot tune or select parameters beyond the required `biological_sex` background field. Do not infer sex from the recording. The v2.0.1 profile uses a moderate fixed pitch/formant shift and disables periodic micro-modulation so artificial trembling does not interfere with intonation analysis.
 
-The v2 test profiles perform duration-preserving pitch shift, formant-band reshaping, deterministic micro-modulation, mono downmixing, band limiting, soft limiting, and RMS normalization in a module Web Worker. Male uses approximately +4 semitones and a 1.18 formant scale; female uses approximately -4 semitones and a 0.84 formant scale. These are test defaults, not validated production anonymization guarantees.
+The v2.0.1 test profiles perform duration-preserving pitch shift, formant-band reshaping, mono downmixing, band limiting, soft limiting, and RMS normalization in a module Web Worker. Male uses +3 semitones and a 1.12 formant scale; female uses -3 semitones and a 0.89 formant scale. Periodic micro-modulation is disabled to avoid artificial trembling. These are test defaults, not validated production anonymization guarantees.
 
 The transformation configuration must be versioned so a submitted record can identify the exact processing version used.
 
-Formal upload and storage rule:
+Upload and storage rule:
 
 - Raw microphone audio must remain on the participant's device.
 - Raw audio must never be uploaded to the server, R2, D1, logs, analytics, or error-reporting services.

@@ -20,7 +20,7 @@ const created = await json(await fetch(`${baseUrl}/api/submissions`, {
   body: JSON.stringify({
     consent: true,
     study_id: "speech-pilot-001",
-    study_version: "0.3.2",
+    study_version: "0.4.0",
     profile: {
       age_group: "18_24",
       biological_sex: "male",
@@ -54,7 +54,7 @@ if (mismatchedProfileAttempt.status !== 400) {
   throw new Error(`Sex/profile mismatch was not rejected: ${mismatchedProfileAttempt.status}`);
 }
 
-for (const taskId of ["task_001", "task_002"]) {
+for (const taskId of ["eligibility_001", "task_001", "task_002"]) {
   await json(await fetch(`${baseUrl}/api/submissions/${created.submission_id}/tasks/${taskId}/audio`, {
     method: "PUT",
     headers: {

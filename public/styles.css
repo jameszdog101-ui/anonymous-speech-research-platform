@@ -256,7 +256,10 @@ h1 { max-width: 680px; margin: 0; font-family: Georgia, "Noto Serif TC", serif; 
 .device-grid { display: grid; gap: 14px; margin: 30px 0 18px; }
 .device-card { display: grid; grid-template-columns: 42px 1fr 54px; align-items: center; gap: 18px; padding: 20px; border: 1px solid var(--line); background: white; }
 .device-card h2 { margin: 0 0 6px; font-size: 16px; }
+.plain-language-note { display: block; margin: -1px 0 6px; color: var(--green-dark); font-size: 12px; font-weight: 800; line-height: 1.5; }
 .device-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.device-heard-confirm { grid-column: 2 / -1; display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 13px; font-weight: 700; }
+.device-heard-confirm input { width: 18px; height: 18px; accent-color: var(--green); }
 .device-number { display: grid; place-items: center; width: 34px; height: 34px; color: var(--coral); border-bottom: 2px solid var(--coral); font-size: 11px; font-weight: 900; }
 .record-button.compact { width: 50px; height: 50px; }
 .device-result { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 18px 20px; background: #f6f7f2; border-left: 4px solid var(--yellow); }
@@ -264,8 +267,6 @@ h1 { max-width: 680px; margin: 0; font-family: Georgia, "Noto Serif TC", serif; 
 .device-result small { color: var(--muted); }
 .device-result time { font-family: ui-monospace, monospace; }
 .device-result audio { grid-column: 1 / -1; width: 100%; height: 38px; }
-.device-confirm { display: flex; align-items: start; gap: 10px; margin-top: 16px; color: var(--ink); font-size: 13px; line-height: 1.5; }
-.device-confirm input { width: 18px; height: 18px; accent-color: var(--green); }
 
 footer { width: min(1180px, calc(100% - 40px)); margin: 0 auto 28px; display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
 

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { STUDY_CONFIG } from "../public/study-config.js";
 import {
   REQUIRED_SECOND_LANGUAGE,
+  TASK_IDS,
   TRANSFORM_PROFILES,
   TRANSFORM_PARAMETER_SETS,
   hasWavHeader,
@@ -44,6 +45,7 @@ test("requires explicit consent", () => {
 test("rejects raw or ambiguously labeled audio", () => {
   const request = audioRequest({ "Content-Type": "audio/webm", "X-Audio-State": "raw" });
   assert.match(validateAudioRequest(request, "task_001"), /WAV|轉換/);
+  assert.match(validateAudioRequest(request, "eligibility_001"), /WAV|轉換/);
 });
 
 test("accepts only the versioned transformed WAV contract", () => {
@@ -55,6 +57,7 @@ test("accepts only the versioned transformed WAV contract", () => {
     "Content-Length": "1024"
   });
   assert.equal(validateAudioRequest(request, "task_001"), null);
+  assert.equal(validateAudioRequest(request, "eligibility_001"), null);
   assert.match(validateAudioRequest(request, "unknown_task"), /未知/);
 });
 
@@ -111,15 +114,34 @@ test("completion UI and proof do not expose the submission UUID", async () => {
   assert.doesNotMatch(app, /receipt_id/);
 });
 
-test("device test previews transformed audio and privacy promises are explicit", async () => {
+test("eligibility recording is transformed locally and only the transformed WAV is uploaded", async () => {
   const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
 
   assert.match(html, /你的聲音會先去識別化/);
   assert.match(html, /本研究不會將任何錄音用於訓練 AI/);
+  assert.match(html, /確認你是否以填寫的第一語言自然表達/);
+  assert.match(html, /你的母語，也就是你從小最自然、最常使用的語言/);
+  assert.match(html, /不要使用正在學習的中文/);
+  assert.match(html, /第一語言使用情況與錄音品質/);
   assert.match(html, /正式作答只會上傳並儲存去識別化後的版本/);
   assert.match(app, /transformRecording\(rawBlob, activeTransformProfile\(\)\)/);
+  assert.match(app, /uploadTransformedAudio\(state\.submissionId, STUDY_CONFIG\.eligibilityTask, state\.deviceProcessedAudio/);
   assert.doesNotMatch(app, /createObjectURL\(rawBlob\)/);
+  assert.equal(TASK_IDS.has("eligibility_001"), true);
+});
+
+test("device audio uses a four-second melody and an explicit audibility confirmation", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const wav = await readFile(new URL("../public/assets/device-test-music.wav", import.meta.url));
+  const sampleRate = wav.readUInt32LE(24);
+  const dataBytes = wav.readUInt32LE(40);
+  const durationSeconds = dataBytes / 2 / sampleRate;
+
+  assert.ok(durationSeconds >= 3 && durationSeconds <= 5, `unexpected duration: ${durationSeconds}`);
+  assert.match(html, /id="device-heard-confirm"/);
+  assert.match(html, /我能清楚聽到測試音樂/);
+  assert.match(html, /今天早上、中午和晚上的天氣/);
 });
 
 test("optional other-language guidance remains readable after translation", async () => {

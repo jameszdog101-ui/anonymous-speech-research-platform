@@ -8,7 +8,7 @@ The current study targets participants who use Mandarin Chinese as a second lang
 
 Raw microphone recordings stay in browser memory. Only a locally transformed `audio/wav` object is passed to the upload client. The Worker validates the transformed-audio headers before writing to R2; D1 stores metadata only.
 
-The local device test also applies the participant's sex-specific `PROFILE_A v2` transformation before playback, so participants can hear the expected effect before formal tasks. Neither the raw nor transformed device-test recording is uploaded or persisted. The study does not use participant recordings to train AI models.
+The pre-task check plays an approximately four-second local melody and requires the participant to confirm that it is audible. The participant then gives a 10–20 second description of the morning, noon, and evening weather in their first language. The browser applies the sex-specific `PROFILE_A v2.0.1` transformation locally and uploads only the transformed WAV as `eligibility_001`; the raw recording is never uploaded or persisted. Researchers may use this recording only to check first-language use and recording quality, not to infer nationality or train AI models.
 
 The completion page does not expose the internal submission UUID. Its downloadable PNG proof is generated locally and contains no UUID, timestamp, participant profile, or response data, preventing a returned proof from directly identifying the corresponding research record.
 
