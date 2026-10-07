@@ -4,10 +4,11 @@ CREATE TABLE IF NOT EXISTS submissions (
   study_version TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('in_progress', 'completed')),
   age_group TEXT NOT NULL,
+  nationality TEXT NOT NULL,
   language_background TEXT NOT NULL,
   first_language TEXT NOT NULL,
-  second_language TEXT NOT NULL,
-  language_learning_years REAL NOT NULL,
+  second_languages_json TEXT NOT NULL,
+  mandarin_learning_years REAL NOT NULL,
   created_at TEXT NOT NULL,
   completed_at TEXT
 );

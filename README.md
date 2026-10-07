@@ -1,6 +1,6 @@
 # Anonymous Speech Research Platform
 
-匿名語音研究平台 MVP。受試者可在瀏覽器中完成同意、背景資料、刺激語音播放、錄音、本機聲音轉換及匿名提交。
+匿名語音研究平台 MVP。受試者可選擇平台語言，完成同意、背景資料、設備測試、問題播放、錄音、本機聲音轉換及匿名提交。
 
 ## Privacy invariant
 
@@ -31,8 +31,12 @@ Edit `public/study-config.js`. Each task contains:
 - `research_instructions`
 - `play_once`
 - `replay_allowed`
+- `max_playbacks` (current rule: 2)
+- `max_recordings` (current rule: 2)
 
-The two playback booleans must be logical opposites. Replace files in `public/assets/` with approved research stimuli before deployment.
+The two playback booleans must be logical opposites. Replace files in `public/assets/` with approved research question audio before deployment.
+
+The opening language selector uses the Google Translate website element. It requires internet access and sends page text to Google's translation service; Traditional Chinese remains usable when the service cannot load. Include this external service in participant disclosure and privacy review before production use.
 
 ## Cloudflare setup
 

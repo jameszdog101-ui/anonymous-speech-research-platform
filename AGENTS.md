@@ -32,10 +32,11 @@ Keep the test version short. The exact number of tasks and exact recording durat
 The MVP may collect only these background fields:
 
 - `age_group`
+- `nationality`
 - `language_background`
 - `first_language`
-- `second_language`
-- `language_learning_years`
+- `second_languages` (array; may contain multiple L2 languages)
+- `mandarin_learning_years` (years learning Mandarin/Chinese/Putonghua)
 
 Do not collect:
 
@@ -59,10 +60,16 @@ Every speech task must support these fields:
 - research instructions: instructions specific to the task
 - play-once flag: whether the stimulus may be played only once
 - replay-allowed flag: whether repeat playback is permitted
+- maximum playback attempts (MVP rule: 2)
+- maximum recording attempts (MVP rule: 2)
 
 Stimulus files may be MP3 or WAV. Validate supported browser playback and show a usable error when a supplied file cannot be played.
 
-The play-once and replay-allowed fields describe the same playback policy and must not be allowed to contradict one another. Prefer a single canonical policy in code, while preserving both requested concepts in configuration/API mapping if needed.
+The play-once and replay-allowed fields describe the same playback policy and must not be allowed to contradict one another. In the current MVP, each question may be played at most twice and each answer may be recorded at most twice. Prefer a single canonical policy in code, while preserving both requested concepts in configuration/API mapping if needed.
+
+Before formal tasks begin, participants must complete a local device test. The browser speaks "請從數字一數到十", the participant records themselves counting from one to ten, and the recording is played back locally. Device-test audio must never be uploaded.
+
+The initial screen provides a platform-language choice through Google Translate. Traditional Chinese remains available as the source-language fallback if the external translation service is unavailable.
 
 ## Voice transformation and privacy rule
 

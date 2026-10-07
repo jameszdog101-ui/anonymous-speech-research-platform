@@ -20,13 +20,14 @@ const created = await json(await fetch(`${baseUrl}/api/submissions`, {
   body: JSON.stringify({
     consent: true,
     study_id: "speech-pilot-001",
-    study_version: "0.1.0",
+    study_version: "0.2.0",
     profile: {
       age_group: "18_24",
+      nationality: "Taiwan",
       language_background: "bilingual",
       first_language: "Mandarin",
-      second_language: "English",
-      language_learning_years: 8
+      second_languages: ["English", "Japanese"],
+      mandarin_learning_years: 8
     }
   })
 }));

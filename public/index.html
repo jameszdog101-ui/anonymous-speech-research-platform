@@ -9,6 +9,34 @@
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
+    <div id="language-gate" class="language-gate" role="dialog" aria-modal="true" aria-labelledby="language-title">
+      <div class="language-panel">
+        <span class="brand-mark language-mark" aria-hidden="true">聲</span>
+        <p class="eyebrow">Language / 語言</p>
+        <h1 id="language-title">選擇平台語言</h1>
+        <p>請選擇閱讀本研究平台時使用的語言。翻譯由 Google Translate 提供。</p>
+        <label class="language-select">
+          <span>平台語言 / Platform language</span>
+          <select id="platform-language">
+            <option value="zh-TW">繁體中文</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="id">Bahasa Indonesia</option>
+            <option value="ms">Bahasa Melayu</option>
+            <option value="th">ไทย</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
+        <div id="google_translate_element" class="google-translate-engine" aria-hidden="true"></div>
+        <p id="translate-status" class="field-help">繁體中文為原始語言；其他語言由 Google Translate 產生。</p>
+        <button id="enter-platform" class="button button-primary" type="button">使用目前語言進入 <span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">聲</span>
@@ -26,8 +54,9 @@
         <ol id="progress-list" class="progress-list">
           <li class="is-active" data-step="0"><span>1</span><div><strong>研究說明</strong><small>閱讀並同意</small></div></li>
           <li data-step="1"><span>2</span><div><strong>背景資料</strong><small>不含身分資訊</small></div></li>
-          <li data-step="2"><span>3</span><div><strong>語音任務</strong><small id="task-progress-label">2 題</small></div></li>
-          <li data-step="3"><span>4</span><div><strong>完成提交</strong><small>取得匿名編號</small></div></li>
+          <li data-step="2"><span>3</span><div><strong>設備測試</strong><small>確認播放與錄音</small></div></li>
+          <li data-step="3"><span>4</span><div><strong>問答任務</strong><small id="task-progress-label">2 題</small></div></li>
+          <li data-step="4"><span>5</span><div><strong>完成提交</strong><small>取得匿名編號</small></div></li>
         </ol>
         <div class="privacy-note">
           <strong>隱私處理原則</strong>
@@ -89,35 +118,90 @@
               </select>
             </label>
             <label>
+              <span>國籍</span>
+              <input name="nationality" maxlength="60" placeholder="例如：臺灣" autocomplete="country-name" required>
+              <small class="field-help">請填國家或地區名稱，不需填居住地址。</small>
+            </label>
+            <label>
               <span>語言背景</span>
               <select name="language_background" required>
                 <option value="">請選擇</option>
-                <option value="monolingual">單語</option>
-                <option value="bilingual">雙語</option>
-                <option value="multilingual">多語</option>
+                <option value="monolingual">單語（只會說一種語言）</option>
+                <option value="bilingual">雙語（會說兩種語言）</option>
+                <option value="multilingual">多語（會說三種或以上語言）</option>
               </select>
+              <small class="field-help">請依你能實際理解或使用的語言數量選擇。</small>
             </label>
             <label>
               <span>第一語言</span>
               <input name="first_language" maxlength="40" placeholder="例如：華語" autocomplete="off" required>
+              <small class="field-help">第一語言（L1）是你最早自然習得、通常從小在家庭中使用的語言。</small>
             </label>
-            <label>
-              <span>第二語言</span>
-              <input name="second_language" maxlength="40" placeholder="沒有可填「無」" autocomplete="off" required>
-            </label>
+            <fieldset class="language-fields full-width">
+              <legend>第二語言</legend>
+              <small class="field-help">第二語言（L2）指第一語言之後習得的其他語言，不代表熟練程度。如有多個，可逐一新增。</small>
+              <div id="second-languages" class="repeatable-fields">
+                <div class="repeatable-row">
+                  <input name="second_languages" maxlength="40" placeholder="例如：英語；單語者可留白" autocomplete="off">
+                </div>
+              </div>
+              <button id="add-language" class="text-button" type="button"><span aria-hidden="true">＋</span> 新增另一個第二語言</button>
+            </fieldset>
             <label class="full-width">
-              <span>第二語言學習年數</span>
-              <input name="language_learning_years" type="number" min="0" max="80" step="0.5" inputmode="decimal" required>
+              <span>華語／漢語／中文／普通話學習時間（年）</span>
+              <input name="mandarin_learning_years" type="number" min="0" max="80" step="0.5" inputmode="decimal" placeholder="未學習請填 0" required>
+              <small class="field-help">請填累計學習年數，可使用 0.5 表示半年。</small>
             </label>
           </form>
 
           <div class="actions">
             <button class="button button-quiet" type="button" data-back="0"><span aria-hidden="true">←</span> 上一步</button>
-            <button id="profile-next" class="button button-primary" type="button">開始語音任務 <span aria-hidden="true">→</span></button>
+            <button id="profile-next" class="button button-primary" type="button">前往設備測試 <span aria-hidden="true">→</span></button>
           </div>
         </section>
 
         <section class="step" data-step-panel="2">
+          <p class="eyebrow">正式測驗前</p>
+          <h1>設備測試</h1>
+          <p class="lead">正式題目中的問題播放與作答錄音各只能操作兩次。請先在這裡確認喇叭與麥克風可以正常使用；設備測試內容不會上傳。</p>
+
+          <div class="device-grid">
+            <article class="device-card">
+              <div class="device-number">01</div>
+              <div>
+                <h2>測試聲音播放</h2>
+                <p>按下播放後，你應該會聽到：「請從數字一數到十」。</p>
+              </div>
+              <button id="device-play" class="round-button" type="button" aria-label="播放設備測試語句" title="播放設備測試語句">▶</button>
+            </article>
+            <article class="device-card">
+              <div class="device-number">02</div>
+              <div>
+                <h2>測試麥克風錄音</h2>
+                <p>請使用麥克風從一數到十，再播放自己的測試錄音確認聲音。</p>
+              </div>
+              <button id="device-record" class="record-button compact" type="button" aria-label="開始設備測試錄音" title="開始設備測試錄音"><span></span></button>
+            </article>
+          </div>
+          <div class="device-result">
+            <div>
+              <strong id="device-status">尚未完成設備測試</strong>
+              <small id="device-help">請先播放指示，再錄製一段測試語音。</small>
+            </div>
+            <time id="device-time">00:00</time>
+            <audio id="device-preview" controls hidden></audio>
+          </div>
+          <label class="device-confirm">
+            <input id="device-confirm" type="checkbox" disabled>
+            <span>我已聽到播放內容，也能從測試錄音中聽到自己的聲音。</span>
+          </label>
+          <div class="actions">
+            <button class="button button-quiet" type="button" data-back="1"><span aria-hidden="true">←</span> 返回背景資料</button>
+            <button id="device-next" class="button button-primary" type="button" disabled>開始正式問答 <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="step" data-step-panel="3">
           <div class="task-heading">
             <div>
               <p class="eyebrow" id="task-count">語音任務</p>
@@ -132,17 +216,17 @@
 
           <div class="stimulus-strip">
             <div>
-              <span class="section-label">刺激語音</span>
-              <p id="playback-policy">可重複播放</p>
+              <span class="section-label">播放問題</span>
+              <p id="playback-policy">最多播放 2 次</p>
             </div>
-            <button id="play-stimulus" class="round-button" type="button" aria-label="播放刺激語音" title="播放刺激語音">▶</button>
+            <button id="play-stimulus" class="round-button" type="button" aria-label="播放問題" title="播放問題">▶</button>
             <div class="waveform stimulus-wave" aria-hidden="true"></div>
             <span id="stimulus-time">00:00</span>
           </div>
           <audio id="stimulus-audio" preload="metadata"></audio>
 
           <div class="recorder">
-            <span class="section-label">你的回應</span>
+            <div class="section-row"><span class="section-label">你的回答</span><small id="record-attempts">錄音 0 / 2 次</small></div>
             <div class="recorder-main">
               <button id="record-button" class="record-button" type="button" aria-label="開始錄音" title="開始錄音"><span></span></button>
               <div class="record-copy">
@@ -167,7 +251,7 @@
           </div>
         </section>
 
-        <section class="step completion" data-step-panel="3">
+        <section class="step completion" data-step-panel="4">
           <div class="success-mark" aria-hidden="true">✓</div>
           <p class="eyebrow">提交完成</p>
           <h1>謝謝你的參與</h1>
@@ -186,6 +270,17 @@
       <span>PROFILE_A · 測試版</span>
     </footer>
 
+    <script>
+      window.googleTranslateElementInit = function () {
+        new google.translate.TranslateElement({
+          pageLanguage: "zh-TW",
+          includedLanguages: "en,es,fr,id,ja,ko,ms,th,vi,zh-CN,zh-TW",
+          autoDisplay: false
+        }, "google_translate_element");
+        document.dispatchEvent(new Event("google-translate-ready"));
+      };
+    </script>
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

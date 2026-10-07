@@ -51,18 +51,19 @@ async function createSubmission(request, env) {
   const profile = payload.profile;
   await env.DB.prepare(`
     INSERT INTO submissions (
-      id, study_id, study_version, status, age_group, language_background,
-      first_language, second_language, language_learning_years, created_at
-    ) VALUES (?, ?, ?, 'in_progress', ?, ?, ?, ?, ?, ?)
+      id, study_id, study_version, status, age_group, nationality, language_background,
+      first_language, second_languages_json, mandarin_learning_years, created_at
+    ) VALUES (?, ?, ?, 'in_progress', ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     payload.study_id,
     payload.study_version,
     profile.age_group,
+    profile.nationality.trim(),
     profile.language_background,
     profile.first_language.trim(),
-    profile.second_language.trim(),
-    profile.language_learning_years,
+    JSON.stringify(profile.second_languages.map((language) => language.trim())),
+    profile.mandarin_learning_years,
     new Date().toISOString()
   ).run();
   return json({ submission_id: id }, 201);

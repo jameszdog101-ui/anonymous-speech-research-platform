@@ -1,9 +1,10 @@
 export const ALLOWED_PROFILE_FIELDS = Object.freeze([
   "age_group",
+  "nationality",
   "language_background",
   "first_language",
-  "second_language",
-  "language_learning_years"
+  "second_languages",
+  "mandarin_learning_years"
 ]);
 
 export const AGE_GROUPS = new Set(["under_18", "18_24", "25_34", "35_44", "45_54", "55_plus"]);
@@ -33,9 +34,16 @@ export function validateSubmissionPayload(payload) {
   }
   if (!AGE_GROUPS.has(profile.age_group)) return "年齡區間不正確。";
   if (!LANGUAGE_BACKGROUNDS.has(profile.language_background)) return "語言背景不正確。";
-  if (!isShortText(profile.first_language) || !isShortText(profile.second_language)) return "語言欄位格式不正確。";
-  if (typeof profile.language_learning_years !== "number" || !Number.isFinite(profile.language_learning_years) || profile.language_learning_years < 0 || profile.language_learning_years > 80) {
-    return "語言學習年數不正確。";
+  if (!isShortText(profile.nationality)) return "國籍欄位格式不正確。";
+  if (!isShortText(profile.first_language)) return "第一語言欄位格式不正確。";
+  if (!Array.isArray(profile.second_languages) || profile.second_languages.length > 6 || profile.second_languages.some((language) => !isShortText(language))) {
+    return "第二語言欄位格式不正確。";
+  }
+  if (profile.language_background !== "monolingual" && profile.second_languages.length === 0) {
+    return "雙語或多語背景至少需要填寫一個第二語言。";
+  }
+  if (typeof profile.mandarin_learning_years !== "number" || !Number.isFinite(profile.mandarin_learning_years) || profile.mandarin_learning_years < 0 || profile.mandarin_learning_years > 80) {
+    return "華語學習時間不正確。";
   }
   return null;
 }

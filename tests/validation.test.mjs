@@ -11,10 +11,11 @@ import {
 
 const validProfile = {
   age_group: "18_24",
+  nationality: "臺灣",
   language_background: "bilingual",
   first_language: "華語",
-  second_language: "英語",
-  language_learning_years: 8
+  second_languages: ["英語", "日語"],
+  mandarin_learning_years: 8
 };
 
 function audioRequest(headers = {}) {
@@ -56,7 +57,20 @@ test("accepts only the versioned transformed WAV contract", () => {
 test("study playback policies cannot contradict each other", () => {
   for (const task of STUDY_CONFIG.tasks) {
     assert.notEqual(task.play_once, task.replay_allowed, task.task_id);
+    assert.equal(task.max_playbacks, 2, task.task_id);
+    assert.equal(task.max_recordings, 2, task.task_id);
   }
+});
+
+test("monolingual profiles may omit L2 but bilingual profiles may not", () => {
+  assert.equal(validateSubmissionPayload({
+    consent: true, study_id: "pilot", study_version: "1",
+    profile: { ...validProfile, language_background: "monolingual", second_languages: [] }
+  }), null);
+  assert.match(validateSubmissionPayload({
+    consent: true, study_id: "pilot", study_version: "1",
+    profile: { ...validProfile, second_languages: [] }
+  }), /至少/);
 });
 
 test("recognizes a WAV container signature", () => {
