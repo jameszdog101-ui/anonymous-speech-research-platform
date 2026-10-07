@@ -4,8 +4,6 @@ compatibility_date = "2026-10-01"
 
 [vars]
 FRONTEND_ORIGIN = "https://anonymous-speech-research-staging.pages.dev"
-# Set in the Cloudflare dashboard or deployment environment. Comma-separated.
-RESEARCHER_EMAILS = "REPLACE_WITH_RESEARCHER_EMAILS"
 
 [[d1_databases]]
 binding = "DB"
@@ -14,5 +12,5 @@ database_id = "629bd064-2df8-413c-bcc0-6f46dfe3bdd3"
 
 [[r2_buckets]]
 binding = "AUDIO"
-bucket_name = "anonymous-speech-audio"
+bucket_name = "anonymous-speech-audio-staging"
 
