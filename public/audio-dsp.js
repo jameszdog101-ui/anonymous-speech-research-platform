@@ -115,6 +115,7 @@ export function applyBiquad(samples, sampleRate, type, frequency, q, gainDb = 0)
 }
 
 export function applyModulatedDelay(samples, sampleRate, depthMs, rateHz) {
+  if (depthMs <= 0 || rateHz <= 0) return new Float32Array(samples);
   const output = new Float32Array(samples.length);
   const baseDelay = Math.max(2, depthMs * sampleRate / 1000);
   for (let index = 0; index < samples.length; index += 1) {

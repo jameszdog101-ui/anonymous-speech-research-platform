@@ -16,7 +16,7 @@ const validProfile = {
   biological_sex: "male",
   nationality: "日本",
   language_background: "bilingual",
-  first_language: "中文（普通話）",
+  first_language: "日文",
   second_languages: ["英語", "日語"],
   mandarin_learning_years: 8
 };
@@ -69,8 +69,10 @@ test("biological sex maps to one fixed v2 transform profile", () => {
   assert.equal(transformProfileForSex("male"), "PROFILE_A_M");
   assert.equal(transformProfileForSex("female"), "PROFILE_A_F");
   assert.equal(transformProfileForSex("unknown"), null);
-  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_M.pitchSemitones, 4);
-  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.pitchSemitones, -4);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_M.pitchSemitones, 3);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.pitchSemitones, -3);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_M.modulationDepthMs, 0);
+  assert.equal(TRANSFORM_PARAMETER_SETS.PROFILE_A_F.modulationDepthMs, 0);
 });
 
 test("monolingual profiles may omit L2 but bilingual profiles may not", () => {

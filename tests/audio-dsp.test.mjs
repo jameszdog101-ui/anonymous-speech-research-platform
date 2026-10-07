@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { rms, transformSamples } from "../public/audio-dsp.js";
+import { applyModulatedDelay, rms, transformSamples } from "../public/audio-dsp.js";
 import { STUDY_CONFIG } from "../public/study-config.js";
 
 function voiceLikeSignal(sampleRate, seconds) {
@@ -46,4 +46,11 @@ test("v2 profiles preserve duration while materially changing the signal", () =>
 test("v2 processing fails closed for silence", () => {
   const silent = new Float32Array(16000);
   assert.throws(() => transformSamples(silent, 16000, STUDY_CONFIG.transformProfiles.male), /silent|quiet/i);
+});
+
+test("v2.0.1 disables periodic modulation to preserve intonation", () => {
+  const input = voiceLikeSignal(16000, 0.5);
+  const output = applyModulatedDelay(input, 16000, 0, 0);
+  assert.deepEqual(output, input);
+  assert.notEqual(output, input);
 });

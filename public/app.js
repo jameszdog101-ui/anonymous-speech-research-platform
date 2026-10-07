@@ -269,7 +269,7 @@ async function finishDeviceRecording() {
   state.deviceChunks = [];
   state.deviceRecorder = null;
   elements.deviceRecord.disabled = true;
-  elements.deviceStatus.textContent = "正在進行 v2.0 去識別化";
+  elements.deviceStatus.textContent = `正在進行 ${activeTransformProfile().version} 去識別化`;
   elements.deviceHelp.textContent = "原始測試錄音只在瀏覽器記憶體中處理，不會上傳或保存。";
   try {
     const transformedBlob = await transformRecording(rawBlob, activeTransformProfile());

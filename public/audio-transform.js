@@ -39,7 +39,7 @@ function runTransformWorker(samples, sampleRate, profile) {
 
 export async function transformRecording(rawBlob, profile) {
   if (!(rawBlob instanceof Blob) || rawBlob.size === 0) throw new Error("錄音內容為空白，請重新錄製。");
-  if (!profile || profile.version !== "2.0.0") throw new Error("聲音轉換設定版本不正確。");
+  if (!profile || profile.version !== "2.0.1") throw new Error("聲音轉換設定版本不正確。");
 
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) throw new Error("此瀏覽器不支援裝置內音訊解碼。");
