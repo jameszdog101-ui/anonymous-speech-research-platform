@@ -3,14 +3,14 @@ main = "worker/src/index.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-FRONTEND_ORIGIN = "http://localhost:8788"
+FRONTEND_ORIGIN = "https://anonymous-speech-research-staging.pages.dev"
 # Set in the Cloudflare dashboard or deployment environment. Comma-separated.
 RESEARCHER_EMAILS = "REPLACE_WITH_RESEARCHER_EMAILS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "anonymous-speech-metadata"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_name = "anonymous-speech-research-staging"
+database_id = "629bd064-2df8-413c-bcc0-6f46dfe3bdd3"
 
 [[r2_buckets]]
 binding = "AUDIO"
