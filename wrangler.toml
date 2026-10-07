@@ -1,0 +1,16 @@
+name = "anonymous-speech-platform-api"
+main = "worker/src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+FRONTEND_ORIGIN = "http://localhost:8788"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "anonymous-speech-metadata"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "AUDIO"
+bucket_name = "anonymous-speech-audio"
+

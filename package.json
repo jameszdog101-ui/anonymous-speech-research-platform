@@ -1,0 +1,16 @@
+{
+  "name": "anonymous-speech-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "generate:audio": "node scripts/generate-demo-audio.mjs",
+    "smoke": "node scripts/smoke-test.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+

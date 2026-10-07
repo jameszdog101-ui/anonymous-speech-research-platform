@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f4f1ea">
+    <meta name="description" content="匿名語音研究測試平台">
+    <title>匿名語音研究</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">聲</span>
+        <div>
+          <strong>匿名語音研究</strong>
+          <span>測試版</span>
+        </div>
+      </div>
+      <div class="privacy-chip"><span aria-hidden="true">●</span> 原音不上傳</div>
+    </header>
+
+    <main class="shell">
+      <aside class="progress-panel" aria-label="填答進度">
+        <p class="eyebrow">研究流程</p>
+        <ol id="progress-list" class="progress-list">
+          <li class="is-active" data-step="0"><span>1</span><div><strong>研究說明</strong><small>閱讀並同意</small></div></li>
+          <li data-step="1"><span>2</span><div><strong>背景資料</strong><small>不含身分資訊</small></div></li>
+          <li data-step="2"><span>3</span><div><strong>語音任務</strong><small id="task-progress-label">2 題</small></div></li>
+          <li data-step="3"><span>4</span><div><strong>完成提交</strong><small>取得匿名編號</small></div></li>
+        </ol>
+        <div class="privacy-note">
+          <strong>隱私處理原則</strong>
+          <p>錄音會先在此裝置轉換聲音；伺服器只接收轉換後的音檔。</p>
+        </div>
+      </aside>
+
+      <section class="workspace" aria-live="polite">
+        <div id="global-alert" class="alert" role="alert" hidden></div>
+
+        <section class="step is-visible" data-step-panel="0">
+          <p class="eyebrow">開始前請先閱讀</p>
+          <h1>語音感知與產出研究</h1>
+          <p class="lead">本測試將請你聆聽短音檔並錄下口語回應，約需 3–5 分鐘。這是技術測試版本，正式研究說明與倫理審查文字仍會另行確認。</p>
+
+          <div class="info-grid">
+            <article>
+              <span class="info-icon" aria-hidden="true">01</span>
+              <h2>匿名參與</h2>
+              <p>不詢問姓名、學號、電話、私人 email、完整生日、地址或身分證字號。</p>
+            </article>
+            <article>
+              <span class="info-icon" aria-hidden="true">02</span>
+              <h2>裝置內轉換</h2>
+              <p>原始錄音只在你的瀏覽器記憶體中處理，不會送往伺服器。</p>
+            </article>
+            <article>
+              <span class="info-icon" aria-hidden="true">03</span>
+              <h2>可停止參與</h2>
+              <p>在最後送出前可以關閉頁面；未完成的原始錄音不會上傳。</p>
+            </article>
+          </div>
+
+          <label class="consent-row">
+            <input id="consent" type="checkbox">
+            <span><strong>我已閱讀上述測試說明，並同意參與。</strong><small>正式上線前將替換為經核准的研究同意文字。</small></span>
+          </label>
+          <div class="actions actions-end">
+            <button id="consent-next" class="button button-primary" type="button" disabled>下一步 <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="step" data-step-panel="1">
+          <p class="eyebrow">背景資料</p>
+          <h1>語言使用概況</h1>
+          <p class="lead">以下資料僅供分組分析。請勿在任何欄位填入可辨識個人身分的內容。</p>
+
+          <form id="profile-form" class="form-grid">
+            <label>
+              <span>年齡區間</span>
+              <select name="age_group" required>
+                <option value="">請選擇</option>
+                <option value="under_18">未滿 18 歲</option>
+                <option value="18_24">18–24 歲</option>
+                <option value="25_34">25–34 歲</option>
+                <option value="35_44">35–44 歲</option>
+                <option value="45_54">45–54 歲</option>
+                <option value="55_plus">55 歲以上</option>
+              </select>
+            </label>
+            <label>
+              <span>語言背景</span>
+              <select name="language_background" required>
+                <option value="">請選擇</option>
+                <option value="monolingual">單語</option>
+                <option value="bilingual">雙語</option>
+                <option value="multilingual">多語</option>
+              </select>
+            </label>
+            <label>
+              <span>第一語言</span>
+              <input name="first_language" maxlength="40" placeholder="例如：華語" autocomplete="off" required>
+            </label>
+            <label>
+              <span>第二語言</span>
+              <input name="second_language" maxlength="40" placeholder="沒有可填「無」" autocomplete="off" required>
+            </label>
+            <label class="full-width">
+              <span>第二語言學習年數</span>
+              <input name="language_learning_years" type="number" min="0" max="80" step="0.5" inputmode="decimal" required>
+            </label>
+          </form>
+
+          <div class="actions">
+            <button class="button button-quiet" type="button" data-back="0"><span aria-hidden="true">←</span> 上一步</button>
+            <button id="profile-next" class="button button-primary" type="button">開始語音任務 <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="step" data-step-panel="2">
+          <div class="task-heading">
+            <div>
+              <p class="eyebrow" id="task-count">語音任務</p>
+              <h1 id="task-title">準備題目</h1>
+            </div>
+            <span id="task-status" class="status-pill">尚未錄音</span>
+          </div>
+          <div class="task-rule">
+            <strong id="task-prompt"></strong>
+            <p id="task-instructions"></p>
+          </div>
+
+          <div class="stimulus-strip">
+            <div>
+              <span class="section-label">刺激語音</span>
+              <p id="playback-policy">可重複播放</p>
+            </div>
+            <button id="play-stimulus" class="round-button" type="button" aria-label="播放刺激語音" title="播放刺激語音">▶</button>
+            <div class="waveform stimulus-wave" aria-hidden="true"></div>
+            <span id="stimulus-time">00:00</span>
+          </div>
+          <audio id="stimulus-audio" preload="metadata"></audio>
+
+          <div class="recorder">
+            <span class="section-label">你的回應</span>
+            <div class="recorder-main">
+              <button id="record-button" class="record-button" type="button" aria-label="開始錄音" title="開始錄音"><span></span></button>
+              <div class="record-copy">
+                <strong id="record-label">點一下開始錄音</strong>
+                <span id="record-help">瀏覽器會詢問麥克風權限</span>
+              </div>
+              <time id="record-time">00:00</time>
+            </div>
+            <div id="processing-row" class="processing-row" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <div><strong>正在此裝置轉換聲音</strong><small>原始錄音不會離開瀏覽器</small></div>
+            </div>
+            <div id="preview-row" class="preview-row" hidden>
+              <audio id="processed-preview" controls></audio>
+              <button id="rerecord-button" class="button button-quiet button-small" type="button">重新錄製</button>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="task-back" class="button button-quiet" type="button"><span aria-hidden="true">←</span> 返回</button>
+            <button id="task-next" class="button button-primary" type="button" disabled>儲存並下一題 <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="step completion" data-step-panel="3">
+          <div class="success-mark" aria-hidden="true">✓</div>
+          <p class="eyebrow">提交完成</p>
+          <h1>謝謝你的參與</h1>
+          <p class="lead">資料已以匿名編號儲存。伺服器只收到轉換後的語音檔與允許的背景資料。</p>
+          <div class="receipt">
+            <span>匿名提交編號</span>
+            <strong id="receipt-id">—</strong>
+          </div>
+          <p class="finish-note">你現在可以安全地關閉這個頁面。</p>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <span>Zero-Cost Automated Speech Research Platform</span>
+      <span>PROFILE_A · 測試版</span>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
+

@@ -150,4 +150,4 @@ For the test MVP, choose conservative, clearly configurable defaults and documen
 
 ## Development status
 
-As of 2026-10-07, requirements above are confirmed as project context, but application implementation has not started. Before expanding beyond the MVP, confirm the relevant unresolved items with the user.
+As of 2026-10-07, the test MVP is implemented. The repository contains the participant web flow, local `PROFILE_A` processing, a Worker API for D1/R2, and a dependency-free local test server. The production Cloudflare resources have not been provisioned or deployed. Before expanding beyond the MVP, confirm the relevant unresolved items with the user.
