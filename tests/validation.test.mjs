@@ -112,6 +112,8 @@ test("completion UI and proof do not expose the submission UUID", async () => {
   assert.match(html, /download-proof/);
   assert.match(app, /Contains no submission ID/);
   assert.doesNotMatch(app, /receipt_id/);
+  assert.doesNotMatch(html, /取得匿名編號|資料已以匿名編號儲存/);
+  assert.doesNotMatch(html, /Zero-Cost Automated Speech Research Platform|PROFILE_A v2\.0\.1|測試版/);
 });
 
 test("eligibility recording is transformed locally and only the transformed WAV is uploaded", async () => {
