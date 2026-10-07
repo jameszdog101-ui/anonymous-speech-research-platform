@@ -164,3 +164,12 @@ For the test MVP, choose conservative, clearly configurable defaults and documen
 ## Development status
 
 As of 2026-10-07, the test MVP is implemented. The repository contains the participant web flow, local `PROFILE_A` processing, a Worker API for D1/R2, and a dependency-free local test server. The production Cloudflare resources have not been provisioned or deployed. Before expanding beyond the MVP, confirm the relevant unresolved items with the user.
+
+## Confirmed researcher access rule
+
+- The later researcher dashboard must let the project owner add, disable, and remove researcher accounts.
+- It must provide a bulk action to revoke every other researcher when the project ends.
+- The Cloudflare account owner is the immutable highest-privilege account and must never be demoted, disabled, removed, or affected by bulk revocation.
+- Store the owner email in a Cloudflare secret such as `PROJECT_OWNER_EMAIL`; do not commit the email to the public repository.
+- Enforce owner protection on the server and record every access change in the audit log.
+- Revoking access is separate from deleting submissions, audio, reviews, or audit records.

@@ -209,6 +209,7 @@ test("researcher portal requires Access identity and audits sensitive actions", 
 
   assert.match(worker, /Cf-Access-Authenticated-User-Email/);
   assert.match(worker, /Cf-Access-Jwt-Assertion/);
+  assert.match(worker, /env\.ADMIN_API_ENABLED !== "true"/);
   assert.match(worker, /download_audio/);
   assert.match(worker, /review_eligibility/);
   assert.match(schema, /CREATE TABLE IF NOT EXISTS submission_reviews/);

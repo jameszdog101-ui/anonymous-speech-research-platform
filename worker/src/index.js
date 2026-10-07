@@ -259,6 +259,10 @@ export default {
     let response;
     try {
       if (currentRoute.name.startsWith("admin-")) {
+        if (env.ADMIN_API_ENABLED !== "true") {
+          response = json({ error: "找不到 API 路徑。" }, 404);
+        }
+        else {
         const email = researcherIdentity(request, env);
         if (!email) response = json({ error: "未授權的研究人員帳號。" }, 401);
         else if (currentRoute.name === "admin-summary" && request.method === "GET") response = await adminSummary(env, email);
@@ -268,6 +272,7 @@ export default {
         else if (currentRoute.name === "admin-review" && request.method === "PUT") response = await adminReview(request, env, email, currentRoute.submissionId);
         else if (currentRoute.name === "admin-export" && request.method === "GET") response = await adminExport(env, email);
         else response = json({ error: "找不到管理 API 路徑。" }, 404);
+        }
       }
       else if (currentRoute.name === "health" && request.method === "GET") response = json({ ok: true });
       else if (currentRoute.name === "submissions" && request.method === "POST") response = await createSubmission(request, env);
