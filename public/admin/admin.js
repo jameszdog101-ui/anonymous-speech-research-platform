@@ -11,6 +11,7 @@ async function api(path, options) {
 }
 
 function showError(error) { alertBox.textContent = error.message; alertBox.hidden = false; }
+function showPanelAlert(selector, message, success = false) { const box = $(selector); box.textContent = message; box.hidden = false; box.classList.toggle("success", success); }
 function reviewLabel(value) { return ({ eligible:"符合", ineligible:"不符合", undetermined:"無法判定" })[value] || "待審核"; }
 function statusLabel(value) { return value === "completed" ? "已完成" : "進行中"; }
 function shortId(value) { return `${value.slice(0, 8)}…`; }
@@ -65,4 +66,47 @@ async function loadDetail(id) {
 async function loadAll() { alertBox.hidden = true; try { await Promise.all([loadSummary(), loadSubmissions()]); } catch (error) { showError(error); rows.innerHTML = '<tr><td colspan="5" class="empty">無法載入資料。</td></tr>'; } }
 $("#refresh").addEventListener("click", loadAll);
 $("#status-filter").addEventListener("change", () => loadSubmissions().catch(showError));
+
+document.querySelectorAll(".nav-tab").forEach((button) => button.addEventListener("click", () => {
+  document.querySelectorAll(".nav-tab").forEach((tab) => tab.classList.toggle("active", tab === button));
+  document.querySelectorAll(".admin-view").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === button.dataset.view));
+  if (button.dataset.view === "researchers") loadResearchers();
+  if (button.dataset.view === "tasks") loadTasks();
+}));
+
+async function loadResearchers() {
+  const body = $("#researcher-rows");
+  try {
+    const data = await api("../admin/api/researchers");
+    body.replaceChildren();
+    data.researchers.forEach((researcher) => {
+      const row = document.createElement("tr");
+      row.innerHTML = "<td></td><td></td><td></td><td class=\"row-actions\"></td>";
+      row.cells[0].textContent = researcher.email;
+      row.cells[1].textContent = researcher.is_owner ? "最高權限擁有者" : researcher.role === "manager" ? "管理者" : "研究者";
+      row.cells[2].textContent = researcher.status === "active" ? "啟用" : "已停用";
+      if (researcher.is_owner) row.cells[3].textContent = "不可變更";
+      else {
+        const toggle = document.createElement("button"); toggle.textContent = researcher.status === "active" ? "停用" : "啟用";
+        toggle.addEventListener("click", async () => { await api(`../admin/api/researchers/${encodeURIComponent(researcher.email)}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ status:researcher.status === "active" ? "disabled" : "active" }) }); loadResearchers(); });
+        const remove = document.createElement("button"); remove.className = "text-danger"; remove.textContent = "移除";
+        remove.addEventListener("click", async () => { if (!confirm(`確定移除 ${researcher.email}？`)) return; await api(`../admin/api/researchers/${encodeURIComponent(researcher.email)}`, { method:"DELETE" }); loadResearchers(); });
+        row.cells[3].append(toggle, remove);
+      }
+      body.append(row);
+    });
+  } catch (error) { body.innerHTML = '<tr><td colspan="4" class="empty">無法載入研究者。</td></tr>'; showPanelAlert("#researcher-alert", error.message); }
+}
+
+$("#researcher-form").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; try { await api("../admin/api/researchers", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ email:form.elements.email.value, role:form.elements.role.value }) }); form.reset(); showPanelAlert("#researcher-alert", "研究者已新增。", true); loadResearchers(); } catch (error) { showPanelAlert("#researcher-alert", error.message); } });
+$("#refresh-researchers").addEventListener("click", loadResearchers);
+$("#revoke-all").addEventListener("click", async () => { if (!confirm("確定撤銷所有其他研究者的存取權？最高權限擁有者不受影響。")) return; try { await api("../admin/api/researchers/revoke-all", { method:"POST" }); showPanelAlert("#researcher-alert", "所有其他研究者均已停用。", true); loadResearchers(); } catch (error) { showPanelAlert("#researcher-alert", error.message); } });
+
+let taskDrafts = [];
+function editTask(task = {}) { const form = $("#task-form"); form.hidden = false; for (const name of ["task_id","title","prompt_text","research_instructions","max_playbacks","max_recordings"]) form.elements[name].value = task[name] ?? (name.startsWith("max_") ? 2 : ""); $("#task-audio-preview").hidden = !task.audio_url; $("#task-audio-preview").src = task.audio_url || ""; }
+async function loadTasks() { try { const data = await api("../admin/api/tasks"); taskDrafts = data.tasks; $("#publish-status").textContent = data.published_at ? `上次發布：${dateLabel(data.published_at)}` : "尚未發布"; const list = $("#task-list"); list.replaceChildren(); taskDrafts.forEach((task, index) => { const item = document.createElement("article"); item.className="task-item"; item.innerHTML='<span class="task-order"></span><div class="task-copy"><strong></strong><span></span></div><button type="button">編輯</button>'; $(".task-order",item).textContent=String(index+1).padStart(2,"0"); $("strong",item).textContent=task.title; $(".task-copy span",item).textContent=`${task.task_id} · ${task.audio_url ? "已有音檔" : "尚無音檔"}`; $("button",item).addEventListener("click",()=>editTask(task)); list.append(item); }); if (!taskDrafts.length) list.innerHTML='<p class="empty">尚未建立題目。</p>'; } catch(error){ showPanelAlert("#task-alert",error.message); } }
+$("#new-task").addEventListener("click",()=>editTask({ task_id:`task_${String(taskDrafts.length+1).padStart(3,"0")}` }));
+$("#task-form").addEventListener("submit", async (event) => { event.preventDefault(); const form=event.currentTarget; const payload=Object.fromEntries(new FormData(form)); delete payload.audio; payload.max_playbacks=Number(payload.max_playbacks); payload.max_recordings=Number(payload.max_recordings); try { await api(`../admin/api/tasks/${encodeURIComponent(payload.task_id)}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}); if(form.elements.audio.files[0]) await api(`../admin/api/tasks/${encodeURIComponent(payload.task_id)}/audio`,{method:"PUT",headers:{"Content-Type":form.elements.audio.files[0].type},body:form.elements.audio.files[0]}); showPanelAlert("#task-alert","題目草稿已儲存。",true); await loadTasks(); editTask(taskDrafts.find((task)=>task.task_id===payload.task_id)); } catch(error){ showPanelAlert("#task-alert",error.message); } });
+$("#delete-task").addEventListener("click",async()=>{const id=$("#task-form").elements.task_id.value;if(!id||!confirm(`確定刪除 ${id}？`))return;try{await api(`../admin/api/tasks/${encodeURIComponent(id)}`,{method:"DELETE"});$("#task-form").hidden=true;loadTasks();}catch(error){showPanelAlert("#task-alert",error.message);}});
+$("#publish-tasks").addEventListener("click",async()=>{if(!confirm("確定發布目前草稿？受試者端將讀取這一版題目與音檔。"))return;try{await api("../admin/api/tasks/publish",{method:"POST"});showPanelAlert("#task-alert","題目已發布到受試者端。",true);loadTasks();}catch(error){showPanelAlert("#task-alert",error.message);}});
 loadAll();

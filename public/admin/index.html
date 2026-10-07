@@ -13,10 +13,16 @@
       <img src="../assets/research-mark.svg" width="40" height="40" alt="">
       <div><strong>匿名語音研究平台</strong><span>研究人員端</span></div>
     </div>
+    <nav class="admin-nav" aria-label="研究者後台分頁">
+      <button class="nav-tab active" data-view="submissions">提交審核</button>
+      <button class="nav-tab" data-view="researchers">研究者管理</button>
+      <button class="nav-tab" data-view="tasks">題目與音檔</button>
+    </nav>
     <a class="export-button" href="../admin/api/exports.csv" download>下載 CSV</a>
   </header>
 
   <main class="admin-shell">
+    <section class="admin-view active" data-panel="submissions">
     <section class="page-heading">
       <div><p>研究資料管理</p><h1>提交與資格審核</h1></div>
       <button id="refresh" type="button" title="重新整理" aria-label="重新整理">↻</button>
@@ -52,6 +58,41 @@
       <aside id="detail-pane" class="detail-pane">
         <div class="empty-detail"><strong>選擇一筆匿名提交</strong><span>查看背景資料、去識別化錄音及資格審核。</span></div>
       </aside>
+    </section>
+    </section>
+
+    <section class="admin-view" data-panel="researchers">
+      <section class="page-heading"><div><p>存取權限</p><h1>研究者管理</h1></div><button id="revoke-all" class="danger-button" type="button">撤銷所有其他研究者</button></section>
+      <div id="researcher-alert" class="alert" role="alert" hidden></div>
+      <section class="management-layout">
+        <form id="researcher-form" class="management-form">
+          <h2>新增研究者</h2>
+          <label>研究者 email<input name="email" type="email" required placeholder="researcher@example.edu"></label>
+          <label>權限<select name="role"><option value="researcher">研究者</option><option value="manager">管理者</option></select></label>
+          <button type="submit">新增研究者</button>
+          <p class="form-note">Cloudflare 帳戶持有人為不可停用、不可移除的最高權限擁有者。</p>
+        </form>
+        <div class="management-table"><div class="toolbar"><h2>專案使用者</h2><button id="refresh-researchers" type="button" title="重新整理">↻</button></div><div class="table-wrap"><table><thead><tr><th>Email</th><th>角色</th><th>狀態</th><th>操作</th></tr></thead><tbody id="researcher-rows"><tr><td colspan="4" class="empty">正在載入…</td></tr></tbody></table></div></div>
+      </section>
+    </section>
+
+    <section class="admin-view" data-panel="tasks">
+      <section class="page-heading"><div><p>研究內容</p><h1>題目與問題音檔</h1></div><div class="heading-actions"><button id="new-task" type="button">新增題目</button><button id="publish-tasks" type="button">發布到受試者端</button></div></section>
+      <div id="task-alert" class="alert" role="alert" hidden></div>
+      <section class="management-layout task-layout">
+        <div class="management-table"><div class="toolbar"><h2>題目草稿</h2><span id="publish-status" class="status-text">尚未載入</span></div><div id="task-list" class="task-list"><p class="empty">正在載入…</p></div></div>
+        <form id="task-form" class="management-form" hidden>
+          <h2>編輯題目</h2>
+          <input name="task_id" type="hidden">
+          <label>題目名稱<input name="title" required maxlength="100"></label>
+          <label>題目文字<textarea name="prompt_text" required rows="4"></textarea></label>
+          <label>研究指示<textarea name="research_instructions" required rows="3"></textarea></label>
+          <div class="field-row"><label>最多播放次數<input name="max_playbacks" type="number" min="1" max="2" value="2" required></label><label>最多錄音次數<input name="max_recordings" type="number" min="1" max="2" value="2" required></label></div>
+          <label>問題音檔（MP3 或 WAV）<input name="audio" type="file" accept="audio/mpeg,audio/wav,.mp3,.wav"></label>
+          <audio id="task-audio-preview" controls preload="none" hidden></audio>
+          <div class="form-actions"><button type="submit">儲存草稿</button><button id="delete-task" class="danger-button" type="button">刪除題目</button></div>
+        </form>
+      </section>
     </section>
   </main>
 

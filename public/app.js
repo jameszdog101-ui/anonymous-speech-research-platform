@@ -1,6 +1,8 @@
 import { STUDY_CONFIG } from "./study-config.js";
 import { transformRecording } from "./audio-transform.js";
-import { createSubmission, finalizeSubmission, uploadTransformedAudio } from "./api-client.js";
+import { createSubmission, finalizeSubmission, getPublishedStudyConfig, uploadTransformedAudio } from "./api-client.js";
+
+let runtimeConfig = STUDY_CONFIG;
 
 const state = {
   step: 0, taskIndex: 0, profile: null, submissionId: null,
@@ -49,9 +51,9 @@ function formatTime(seconds) {
   const safe = Math.max(0, Math.floor(seconds));
   return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
 }
-function currentTask() { return STUDY_CONFIG.tasks[state.taskIndex]; }
+function currentTask() { return runtimeConfig.tasks[state.taskIndex]; }
 function activeTransformProfile() {
-  const profile = STUDY_CONFIG.transformProfiles[state.profile?.biological_sex];
+  const profile = runtimeConfig.transformProfiles[state.profile?.biological_sex];
   if (!profile) throw new Error("找不到適用的聲音去識別化設定。");
   return profile;
 }
@@ -97,7 +99,7 @@ function renderTask() {
   resetPreview();
   const task = currentTask();
   validateTaskConfiguration(task);
-  elements.taskCount.textContent = `口說任務 ${state.taskIndex + 1} / ${STUDY_CONFIG.tasks.length}`;
+  elements.taskCount.textContent = `口說任務 ${state.taskIndex + 1} / ${runtimeConfig.tasks.length}`;
   elements.taskTitle.textContent = task.title;
   elements.taskInstructions.textContent = task.research_instructions;
   elements.stimulusAudio.src = task.audio_stimulus;
@@ -108,7 +110,7 @@ function renderTask() {
   elements.recordLabel.textContent = "點一下開始錄音";
   elements.recordHelp.textContent = "每題最多錄音 2 次，以最後一次錄音送出";
   elements.recordButton.classList.remove("is-recording");
-  elements.taskNext.textContent = state.taskIndex === STUDY_CONFIG.tasks.length - 1 ? "送出研究資料 →" : "儲存並下一題 →";
+  elements.taskNext.textContent = state.taskIndex === runtimeConfig.tasks.length - 1 ? "送出研究資料 →" : "儲存並下一題 →";
   updateTaskLimits();
   const existing = state.processedAudio.get(task.task_id);
   if (existing) showProcessedPreview(existing);
@@ -162,12 +164,12 @@ async function startRecording() {
   elements.recordButton.disabled = false;
   elements.recordButton.setAttribute("aria-label", "停止錄音");
   elements.recordLabel.textContent = "錄音中，點一下停止";
-  elements.recordHelp.textContent = `最長 ${STUDY_CONFIG.maxRecordingSeconds} 秒`;
+  elements.recordHelp.textContent = `最長 ${runtimeConfig.maxRecordingSeconds} 秒`;
   updateTaskLimits();
   state.recordTimer = setInterval(() => {
     const elapsed = (Date.now() - state.recordingStartedAt) / 1000;
     elements.recordTime.textContent = formatTime(elapsed);
-    if (elapsed >= STUDY_CONFIG.maxRecordingSeconds) stopRecording();
+    if (elapsed >= runtimeConfig.maxRecordingSeconds) stopRecording();
   }, 200);
 }
 async function finishRecording() {
@@ -197,7 +199,7 @@ async function saveCurrentTask() {
   elements.taskNext.textContent = "正在安全上傳…";
   try {
     await uploadTransformedAudio(state.submissionId, task, audio, activeTransformProfile());
-    if (state.taskIndex < STUDY_CONFIG.tasks.length - 1) { state.taskIndex += 1; renderTask(); }
+    if (state.taskIndex < runtimeConfig.tasks.length - 1) { state.taskIndex += 1; renderTask(); }
     else {
       await finalizeSubmission(state.submissionId);
       setStep(4);
@@ -205,7 +207,7 @@ async function saveCurrentTask() {
   } catch (error) {
     showAlert(`${error.message} 已轉換的錄音仍保留在此頁，可直接重試。`);
     elements.taskNext.disabled = false;
-    elements.taskNext.textContent = state.taskIndex === STUDY_CONFIG.tasks.length - 1 ? "重新送出研究資料 →" : "重新上傳並下一題 →";
+    elements.taskNext.textContent = state.taskIndex === runtimeConfig.tasks.length - 1 ? "重新送出研究資料 →" : "重新上傳並下一題 →";
   }
 }
 
@@ -458,9 +460,9 @@ elements.deviceNext.addEventListener("click", async () => {
   elements.deviceNext.disabled = true;
   elements.deviceNext.textContent = "正在上傳去識別化資格錄音…";
   try {
-    const result = await createSubmission(state.profile, STUDY_CONFIG);
+    const result = await createSubmission(state.profile, runtimeConfig);
     state.submissionId = result.submission_id;
-    await uploadTransformedAudio(state.submissionId, STUDY_CONFIG.eligibilityTask, state.deviceProcessedAudio, activeTransformProfile());
+    await uploadTransformedAudio(state.submissionId, runtimeConfig.eligibilityTask, state.deviceProcessedAudio, activeTransformProfile());
     setStep(3);
     renderTask();
   } catch (error) {
@@ -498,4 +500,12 @@ window.addEventListener("beforeunload", () => {
   if (state.devicePreviewUrl) URL.revokeObjectURL(state.devicePreviewUrl);
 });
 
-elements.taskProgressLabel.textContent = `${STUDY_CONFIG.tasks.length} 題`;
+try {
+  if (window.location.hostname.endsWith(".pages.dev")) {
+    const published = await getPublishedStudyConfig();
+    runtimeConfig = { ...STUDY_CONFIG, version: `published-${published.version}`, tasks: published.tasks };
+  }
+} catch (error) {
+  console.warn("Published study configuration unavailable; using bundled fallback.", error);
+}
+elements.taskProgressLabel.textContent = `${runtimeConfig.tasks.length} 題`;

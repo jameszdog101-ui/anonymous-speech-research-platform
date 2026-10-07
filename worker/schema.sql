@@ -51,3 +51,37 @@ CREATE TABLE IF NOT EXISTS researcher_audit_log (
 CREATE INDEX IF NOT EXISTS idx_reviews_status ON submission_reviews(eligibility_status);
 CREATE INDEX IF NOT EXISTS idx_audit_created_at ON researcher_audit_log(created_at);
 
+CREATE TABLE IF NOT EXISTS researchers (
+  email TEXT PRIMARY KEY,
+  role TEXT NOT NULL CHECK (role IN ('researcher', 'manager')),
+  status TEXT NOT NULL CHECK (status IN ('active', 'disabled')),
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS study_tasks (
+  task_id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  prompt_text TEXT NOT NULL,
+  research_instructions TEXT NOT NULL,
+  max_playbacks INTEGER NOT NULL CHECK (max_playbacks BETWEEN 1 AND 2),
+  max_recordings INTEGER NOT NULL CHECK (max_recordings BETWEEN 1 AND 2),
+  audio_object_key TEXT,
+  audio_content_type TEXT,
+  sort_order INTEGER NOT NULL,
+  updated_by TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS study_publications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  version INTEGER NOT NULL UNIQUE,
+  tasks_json TEXT NOT NULL,
+  published_by TEXT NOT NULL,
+  published_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_researchers_status ON researchers(status);
+CREATE INDEX IF NOT EXISTS idx_study_tasks_sort ON study_tasks(sort_order);
+

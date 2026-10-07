@@ -64,3 +64,10 @@ export async function finalizeSubmission(submissionId) {
   return parseResponse(response);
 }
 
+export async function getPublishedStudyConfig() {
+  assertLiveApi();
+  const response = await fetch(apiUrl("/api/study-config"));
+  const payload = await parseResponse(response);
+  return { ...payload, tasks: payload.tasks.map((task) => ({ ...task, audio_stimulus: apiUrl(task.audio_stimulus) })) };
+}
+

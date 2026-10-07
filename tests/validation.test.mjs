@@ -126,7 +126,7 @@ test("eligibility recording is transformed locally and only the transformed WAV 
   assert.match(html, /第一語言使用情況與錄音品質/);
   assert.match(html, /正式作答只會上傳並儲存去識別化後的版本/);
   assert.match(app, /transformRecording\(rawBlob, activeTransformProfile\(\)\)/);
-  assert.match(app, /uploadTransformedAudio\(state\.submissionId, STUDY_CONFIG\.eligibilityTask, state\.deviceProcessedAudio/);
+  assert.match(app, /uploadTransformedAudio\(state\.submissionId, runtimeConfig\.eligibilityTask, state\.deviceProcessedAudio/);
   assert.doesNotMatch(app, /createObjectURL\(rawBlob\)/);
   assert.equal(TASK_IDS.has("eligibility_001"), true);
 });
@@ -217,5 +217,13 @@ test("researcher portal requires Access identity and audits sensitive actions", 
   assert.match(admin, /符合/);
   assert.match(admin, /不符合/);
   assert.match(admin, /無法判定/);
+  assert.match(admin, /研究者管理/);
+  assert.match(admin, /題目與音檔/);
+  assert.match(admin, /撤銷所有其他研究者/);
+  assert.match(worker, /PROJECT_OWNER_EMAIL/);
+  assert.match(worker, /publish_study_tasks/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS researchers/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS study_tasks/);
+  assert.match(schema, /CREATE TABLE IF NOT EXISTS study_publications/);
 });
 

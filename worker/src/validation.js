@@ -59,7 +59,7 @@ export function validateSubmissionPayload(payload) {
 }
 
 export function validateAudioRequest(request, taskId) {
-  if (!TASK_IDS.has(taskId)) return "未知的語音題目。";
+  if (taskId !== "eligibility_001" && !/^task_[a-zA-Z0-9_-]+$/.test(taskId)) return "未知的語音題目。";
   if (request.headers.get("Content-Type")?.split(";")[0] !== "audio/wav") return "只接受轉換後的 WAV 音檔。";
   if (request.headers.get("X-Audio-State") !== "transformed") return "拒絕未標記為已轉換的音訊。";
   const profile = request.headers.get("X-Transform-Profile");
