@@ -68,7 +68,15 @@ export async function getPublishedStudyConfig() {
   assertLiveApi();
   const response = await fetch(apiUrl("/api/study-config"));
   const payload = await parseResponse(response);
-  return { ...payload, tasks: payload.tasks.map((task) => ({ ...task, audio_stimulus: apiUrl(task.audio_stimulus) })) };
+  return {
+    ...payload,
+    tasks: payload.tasks.map((task) => ({
+      ...task,
+      play_once: task.play_once ?? task.max_playbacks === 1,
+      replay_allowed: task.replay_allowed ?? task.max_playbacks > 1,
+      audio_stimulus: apiUrl(task.audio_stimulus)
+    }))
+  };
 }
 
 export async function getStudyStatus() {

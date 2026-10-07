@@ -69,6 +69,15 @@ test("study playback policies cannot contradict each other", () => {
   }
 });
 
+test("published researcher tasks include a canonical playback policy", async () => {
+  const worker = await readFile(new URL("../worker/src/index.js", import.meta.url), "utf8");
+  const client = await readFile(new URL("../public/api-client.js", import.meta.url), "utf8");
+  assert.match(worker, /play_once:task\.max_playbacks===1/);
+  assert.match(worker, /replay_allowed:task\.max_playbacks>1/);
+  assert.match(client, /play_once: task\.play_once \?\? task\.max_playbacks === 1/);
+  assert.match(client, /replay_allowed: task\.replay_allowed \?\? task\.max_playbacks > 1/);
+});
+
 test("biological sex maps to one fixed v2 transform profile", () => {
   assert.equal(transformProfileForSex("male"), "PROFILE_A_M");
   assert.equal(transformProfileForSex("female"), "PROFILE_A_F");
