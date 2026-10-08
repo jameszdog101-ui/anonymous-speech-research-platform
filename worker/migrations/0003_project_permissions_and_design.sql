@@ -79,7 +79,8 @@ CREATE TABLE IF NOT EXISTS project_page_blocks (
   page_id TEXT NOT NULL,
   block_type TEXT NOT NULL CHECK (block_type IN (
     'heading', 'paragraph', 'notice', 'single_choice', 'multiple_choice',
-    'text_field', 'number_field', 'select_field', 'divider', 'audio_task', 'consent'
+    'text_field', 'number_field', 'select_field', 'fixed_text', 'repeatable_text',
+    'divider', 'audio_task', 'device_audio', 'speech_task', 'completion_download', 'consent'
   )),
   content_json TEXT NOT NULL,
   sort_order INTEGER NOT NULL,

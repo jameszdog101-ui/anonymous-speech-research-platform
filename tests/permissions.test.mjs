@@ -33,3 +33,16 @@ test("permission migration keeps display names, assignments, revisions and page 
   assert.match(sql, /CREATE TABLE IF NOT EXISTS project_page_blocks/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS project_versions/);
 });
+
+test("capacity migration records real object bytes and reversible trash state", async () => {
+  const sql = await readFile(new URL("../worker/migrations/0004_project_capacity_and_trash.sql", import.meta.url), "utf8");
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS project_storage_objects/);
+  assert.match(sql, /byte_size INTEGER NOT NULL/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS project_capacity_snapshots/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS trash_entries/);
+  assert.match(sql, /purge_after TEXT NOT NULL/);
+  assert.match(sql, /source IN \('object_ledger', 'r2_reconciliation'\)/);
+  assert.equal(ALL_PROJECT_PERMISSIONS.has("capacity_refresh"), true);
+  assert.equal(OWNER_ONLY_ACTIONS.has("project_move_to_trash"), true);
+  assert.equal(OWNER_ONLY_ACTIONS.has("trash_permanent_delete"), true);
+});
