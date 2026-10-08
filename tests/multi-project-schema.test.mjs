@@ -132,13 +132,29 @@ test("full participant preview mirrors the configured research flow without coll
   assert.match(html, /研究者預覽/);
   assert.match(html, /此頁不會錄音、上傳或建立研究樣本/);
   assert.match(html, /語言 Language/);
+  assert.match(html, /去識別化語音語言研究平台/);
+  assert.match(html, /語音去識別化收錄網站/);
   assert.match(script, /governanceCards/);
+  assert.match(script, /legacyFooter/);
   assert.match(script, /研究事後說明/);
   assert.match(script, /降低辨識風險，不保證完全匿名/);
   assert.match(script, /consent-check/);
   assert.match(script, /next\.disabled = !consentCheck\.checked/);
   assert.doesNotMatch(script, /getUserMedia/);
   assert.doesNotMatch(script, /fetch\(/);
+});
+
+test("researcher and participant ports use fixed product branding and an interactive consent preview", async () => {
+  const html = await readFile(new URL("../public/admin/project-mock.html", import.meta.url), "utf8");
+  const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin/project-mock.css", import.meta.url), "utf8");
+
+  assert.match(html, /去識別化語音語言研究平台/);
+  assert.match(html, /研究人員介面/);
+  assert.match(script, /class="preview-consent"/);
+  assert.doesNotMatch(script, /class="preview-consent"><input disabled/);
+  assert.match(css, /\.preview-consent input/);
+  assert.match(css, /width:18px!important/);
 });
 
 test("research governance and consent publications are project-scoped and versioned", async () => {

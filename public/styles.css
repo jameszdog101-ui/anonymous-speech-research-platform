@@ -290,7 +290,12 @@ footer { width: min(1180px, calc(100% - 40px)); margin: 0 auto 28px; display: fl
 
 @media (max-width: 480px) {
   .brand span:last-child, .privacy-chip { display: none; }
+  .topbar { padding: 0 12px; }
+  .brand { gap: 7px; }
+  .brand-mark { width: 34px; height: 34px; }
+  .brand strong { font-size: 12px; }
   .topbar-actions { gap: 8px; }
+  .language-button { min-height: 36px; padding: 0 8px; font-size: 11px; }
   h1 { font-size: 34px; }
   .workspace { padding: 26px 18px; }
   .privacy-assurance { padding: 18px; }

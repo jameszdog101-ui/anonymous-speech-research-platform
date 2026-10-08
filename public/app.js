@@ -360,7 +360,7 @@ function downloadCompletionProof() {
   context.fillStyle = "#176b51";
   context.font = "700 24px sans-serif";
   context.textAlign = "left";
-  context.fillText("去識別化語音研究 / De-identified Speech Research", 250, 176);
+  context.fillText("去識別化語音語言研究平台 / De-identified Speech & Language Research Platform", 250, 176, 820);
   context.fillStyle = "#1d2925";
   context.font = "700 56px serif";
   context.textAlign = "center";

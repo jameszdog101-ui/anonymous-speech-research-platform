@@ -128,9 +128,9 @@ test("completion UI and proof do not expose the submission UUID", async () => {
 test("participant-facing brand describes de-identification without claiming full anonymity", async () => {
   const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
-  assert.match(html, /去識別化語音研究/);
-  assert.match(html, /隱私保護語音研究平台/);
-  assert.match(app, /De-identified Speech Research/);
+  assert.match(html, /去識別化語音語言研究平台/);
+  assert.match(html, /語音去識別化收錄網站/);
+  assert.match(app, /De-identified Speech & Language Research Platform/);
   assert.doesNotMatch(html, />匿名參與</);
   assert.doesNotMatch(html, /為維持匿名性/);
 });

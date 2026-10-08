@@ -12,9 +12,9 @@ const governance = previewProject.governance || {};
 const pages = previewProject.pages || [];
 let pageIndex = 0;
 const pageTitle = document.querySelector("#page-title");
-document.title = `${governance.publicTitle || previewProject.name}｜受試者預覽`;
-document.querySelector("#brand-title").textContent = governance.publicTitle || "去識別化語音研究";
-document.querySelector("#footer-text").textContent = previewProject.footer || "研究資料僅依知情同意與核准計畫使用。";
+document.title = `${governance.publicTitle || previewProject.name}｜去識別化語音語言研究平台`;
+const legacyFooter = "隱私保護語音研究平台｜研究資料僅依知情同意與核准計畫使用。";
+document.querySelector("#footer-text").textContent = previewProject.footer === legacyFooter ? "去識別化語音語言研究平台｜研究資料僅依知情同意與核准計畫使用。" : previewProject.footer || "研究資料僅依知情同意與核准計畫使用。";
 
 function options(block) { return String(block.options || "").split("\n").map(value => value.trim()).filter(Boolean); }
 function governanceCards() {
