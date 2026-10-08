@@ -59,6 +59,10 @@ test("researcher mock page exposes the confirmed project workflows", async () =>
   assert.match(script, /增加註解/);
   assert.match(script, /直接修改/);
   assert.match(script, /inline-detail/);
+  assert.match(script, /label:"報告用"/);
+  assert.match(html, /project-settings-form/);
+  assert.match(html, /受試者端專屬 URL/);
+  assert.match(html, /發布更新/);
   assert.doesNotMatch(html, /多重偏誤/);
 });
 
