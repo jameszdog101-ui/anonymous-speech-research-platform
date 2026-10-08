@@ -36,13 +36,20 @@ test("researcher mock page exposes the confirmed project workflows", async () =>
   const html = await readFile(new URL("../public/admin/project-mock.html", import.meta.url), "utf8");
   const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
 
-  assert.match(html, /專案編輯/);
-  assert.match(html, /研究人員筆記/);
+  assert.match(html, /data-view="home">首頁/);
+  assert.match(html, /data-view="projects">研究專案/);
+  assert.match(html, /data-view="trash">垃圾桶/);
+  assert.match(html, /data-project-view="notes">研究筆記/);
+  assert.match(html, /data-project-view="members">研究人員/);
+  assert.match(html, /專案協作/);
   assert.match(html, /垃圾桶/);
   assert.match(html, /預計 30 天內釋放/);
   assert.match(html, /模擬資料，非即時帳務/);
-  assert.match(script, /tag\.label=input\.value/);
-  assert.match(script, /setTimeout\(\(\)=>\{state\.textContent="所有變更已儲存/);
+  assert.match(script, /t\.label=inputs\[0\]\.value/);
+  assert.match(script, /setTimeout\(\(\)=>\{s\.textContent='所有變更已儲存/);
+  assert.match(script, /研究化名/);
+  assert.match(script, /出現位置或判定原因/);
+  assert.match(script, /audio controls/);
   assert.doesNotMatch(html, /多重偏誤/);
 });
 
