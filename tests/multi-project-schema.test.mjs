@@ -64,7 +64,9 @@ test("researcher mock page exposes the confirmed project workflows", async () =>
   assert.match(script, /label: "報告用"/);
   assert.match(html, /project-design-form/);
   assert.match(html, /受試者端專屬 URL/);
-  assert.match(html, /發布更新/);
+  assert.match(html, /通過檢查並發布/);
+  assert.match(html, /研究規範與同意/);
+  assert.match(html, /發布前檢查/);
   assert.doesNotMatch(html, /多重偏誤/);
 });
 
@@ -109,10 +111,39 @@ test("project designer preserves the complete participant form surface", async (
   assert.match(script, /移除題目/);
   assert.match(script, /刪除目前自訂頁面/);
   assert.match(script, /自訂頁面已刪除/);
+  assert.match(script, /function publishAudit/);
+  assert.match(script, /完全匿名\|保證匿名/);
+  assert.match(script, /研究事後說明/);
   assert.doesNotMatch(script, /tag\.active = !tag\.active/);
   assert.doesNotMatch(script, /star\.active = !star\.active/);
   assert.match(designSql, /completion_download/);
   assert.match(capacitySql, /project_media_assets/);
   assert.match(capacitySql, /video\/mp4/);
+});
+
+test("full participant preview mirrors the configured research flow without collecting data", async () => {
+  const html = await readFile(new URL("../public/admin/project-participant-preview.html", import.meta.url), "utf8");
+  const script = await readFile(new URL("../public/admin/project-participant-preview.js", import.meta.url), "utf8");
+
+  assert.match(html, /研究者預覽/);
+  assert.match(html, /此頁不會錄音、上傳或建立研究樣本/);
+  assert.match(html, /語言 Language/);
+  assert.match(script, /governanceCards/);
+  assert.match(script, /研究事後說明/);
+  assert.match(script, /降低辨識風險，不保證完全匿名/);
+  assert.match(script, /consent-check/);
+  assert.match(script, /next\.disabled = !consentCheck\.checked/);
+  assert.doesNotMatch(script, /getUserMedia/);
+  assert.doesNotMatch(script, /fetch\(/);
+});
+
+test("research governance and consent publications are project-scoped and versioned", async () => {
+  const sql = await readFile(new URL("../worker/migrations/0005_research_governance_and_consent.sql", import.meta.url), "utf8");
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS project_research_governance/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS project_publication_snapshots/);
+  assert.match(sql, /consent_version TEXT NOT NULL/);
+  assert.match(sql, /UNIQUE \(project_id, version\)/);
+  assert.match(sql, /minimum_age INTEGER NOT NULL DEFAULT 18/);
+  assert.match(sql, /collect_nationality INTEGER NOT NULL DEFAULT 0/);
 });
 

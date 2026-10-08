@@ -125,6 +125,16 @@ test("completion UI and proof do not expose the submission UUID", async () => {
   assert.doesNotMatch(html, /Zero-Cost Automated Speech Research Platform|PROFILE_A v2\.0\.1|測試版/);
 });
 
+test("participant-facing brand describes de-identification without claiming full anonymity", async () => {
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(html, /去識別化語音研究/);
+  assert.match(html, /隱私保護語音研究平台/);
+  assert.match(app, /De-identified Speech Research/);
+  assert.doesNotMatch(html, />匿名參與</);
+  assert.doesNotMatch(html, /為維持匿名性/);
+});
+
 test("eligibility recording is transformed locally and only the transformed WAV is uploaded", async () => {
   const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");

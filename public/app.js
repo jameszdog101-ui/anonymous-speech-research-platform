@@ -126,7 +126,7 @@ async function playStimulus() {
     await elements.stimulusAudio.play();
     state.stimulusPlays.set(task.task_id, plays + 1);
     updateTaskLimits();
-  } catch { showAlert("問題語音無法播放。請返回設備測試，確認喇叭後再試一次。"); }
+  } catch { showAlert("問題語音無法播放。請返回設備與資格確認，確認喇叭後再試一次。"); }
 }
 
 function selectRecorderMimeType() {
@@ -360,7 +360,7 @@ function downloadCompletionProof() {
   context.fillStyle = "#176b51";
   context.font = "700 24px sans-serif";
   context.textAlign = "left";
-  context.fillText("匿名語音研究 / Anonymous Speech Research", 250, 176);
+  context.fillText("去識別化語音研究 / De-identified Speech Research", 250, 176);
   context.fillStyle = "#1d2925";
   context.font = "700 56px serif";
   context.textAlign = "center";

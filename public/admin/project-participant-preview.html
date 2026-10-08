@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>受試者端完整預覽</title>
+  <link rel="stylesheet" href="./project-participant-preview.css?v=20261008-1">
+</head>
+<body>
+  <div class="preview-banner"><strong>研究者預覽</strong><span>此頁不會錄音、上傳或建立研究樣本。</span><button id="close-preview" type="button">關閉預覽</button></div>
+  <header class="site-header">
+    <a class="brand" href="#"><img src="../assets/research-mark.svg" width="44" height="44" alt=""><span><strong id="brand-title">去識別化語音研究</strong><small>研究平台</small></span></a>
+    <button class="language-button" type="button" title="切換語言">◎ 語言 Language</button>
+    <span class="privacy-chip">原音不上傳</span>
+  </header>
+  <div class="app-shell">
+    <aside class="progress-panel">
+      <p>研究流程</p>
+      <ol id="progress-list"></ol>
+      <section><strong>隱私處理原則</strong><span>錄音會先在此裝置轉換聲音；伺服器只接收轉換後的音檔。</span></section>
+    </aside>
+    <main>
+      <div id="page-kicker" class="kicker"></div>
+      <h1 id="page-title"></h1>
+      <p id="page-body" class="lead"></p>
+      <section id="governance-summary" class="governance-summary" hidden></section>
+      <form id="preview-form"><div id="page-blocks"></div></form>
+      <div class="page-actions"><button id="previous-page" class="secondary" type="button">上一步</button><button id="next-page" class="primary" type="button">下一步</button></div>
+    </main>
+  </div>
+  <footer><span id="footer-text"></span><span>錄音於裝置內先行去識別化</span></footer>
+  <script src="./project-participant-preview.js?v=20261008-1"></script>
+</body>
+</html>

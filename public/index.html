@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f4f1ea">
-    <meta name="description" content="匿名語音研究平台">
-    <title>匿名語音研究</title>
+    <meta name="description" content="隱私保護語音研究平台">
+    <title>去識別化語音研究</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
@@ -41,7 +41,7 @@
       <div class="brand">
         <img class="brand-mark notranslate" src="./assets/research-mark.svg" width="40" height="40" alt="" aria-hidden="true" translate="no">
         <div>
-          <strong>匿名語音研究</strong>
+          <strong>去識別化語音研究</strong>
           <span>研究平台</span>
         </div>
       </div>
@@ -78,7 +78,7 @@
           <div class="info-grid">
             <article>
               <span class="info-icon" aria-hidden="true">01</span>
-              <h2>匿名參與</h2>
+              <h2>去識別化參與</h2>
               <p>不詢問姓名、學號、電話、私人 email、完整生日、地址或身分證字號。</p>
             </article>
             <article>
@@ -164,7 +164,7 @@
 
           <div class="actions">
             <button class="button button-quiet" type="button" data-back="0"><span aria-hidden="true">←</span> 上一步</button>
-            <button id="profile-next" class="button button-primary" type="button">前往設備測試 <span aria-hidden="true">→</span></button>
+            <button id="profile-next" class="button button-primary" type="button">前往設備與資格確認 <span aria-hidden="true">→</span></button>
           </div>
         </section>
 
@@ -186,7 +186,7 @@
                 <h2>測試聲音播放</h2>
                 <p>按下播放後，你會聽到一段約 4 秒的測試音樂。</p>
               </div>
-              <button id="device-play" class="round-button" type="button" aria-label="播放設備測試音樂" title="播放設備測試音樂">▶</button>
+              <button id="device-play" class="round-button" type="button" aria-label="播放設備與資格確認音樂" title="播放設備與資格確認音樂">▶</button>
               <label class="device-heard-confirm">
                 <input id="device-heard-confirm" type="checkbox" disabled>
                 <span>我能清楚聽到測試音樂。</span>
@@ -199,13 +199,13 @@
                 <span class="plain-language-note">白話說明：你的母語，也就是你從小最自然、最常使用的語言</span>
                 <p>請使用你的母語自然流利地簡短描述今天早上、中午和晚上的天氣，不要使用正在學習的中文。約 10–20 秒即可。</p>
               </div>
-              <button id="device-record" class="record-button compact" type="button" aria-label="開始設備測試錄音" title="開始設備測試錄音"><span></span></button>
+              <button id="device-record" class="record-button compact" type="button" aria-label="開始設備與資格確認錄音" title="開始設備與資格確認錄音"><span></span></button>
             </article>
           </div>
           <audio id="device-audio" src="./assets/device-test-music.wav" preload="auto" hidden></audio>
           <div class="device-result">
             <div>
-              <strong id="device-status">尚未完成設備測試</strong>
+              <strong id="device-status">尚未完成設備與資格確認</strong>
               <small id="device-help">請先播放測試音樂，再完成第一語言口說錄音。</small>
             </div>
             <time id="device-time">00:00</time>
@@ -279,7 +279,7 @@
           <div class="completion-proof">
             <span>完成狀態</span>
             <strong>已完成</strong>
-            <p>為維持匿名性，此畫面與完成證明不包含研究資料或個人資料。</p>
+            <p>為降低資料被重新連結至個人的風險，此畫面與完成證明不包含研究資料或個人資料。</p>
           </div>
           <button id="download-proof" class="button button-primary proof-button" type="button">下載完成證明圖片</button>
           <p class="finish-note">下載後可回傳完成證明，接著安全地關閉這個頁面。</p>
@@ -288,7 +288,7 @@
     </main>
 
     <footer>
-      <span>匿名語音研究平台</span>
+      <span>隱私保護語音研究平台</span>
       <span>錄音於裝置內先行去識別化</span>
     </footer>
 
