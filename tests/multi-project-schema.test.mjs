@@ -97,6 +97,12 @@ test("project designer preserves the complete participant form surface", async (
   assert.match(script, /欄位已複製/);
   assert.match(script, /欄位已從草稿移除/);
   assert.match(script, /去識別化語音預聽/);
+  assert.match(script, /function renderTaskEditor/);
+  assert.match(script, /在受試者端啟用/);
+  assert.match(script, /啟用中/);
+  assert.match(script, /已停用/);
+  assert.match(script, /toggle-disable/);
+  assert.match(script, /toggle-enable/);
   assert.match(designSql, /completion_download/);
   assert.match(capacitySql, /project_media_assets/);
   assert.match(capacitySql, /video\/mp4/);

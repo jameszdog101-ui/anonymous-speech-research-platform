@@ -64,7 +64,7 @@ function makeProject(id, name, slug, status, activeBytes, trashBytes, sampleCoun
       { email: "researcher-b@example.edu", displayName: "陳研究員", owner: false, admin: false, permissions: [...researcherDefaults] }
     ],
     notes: { division: "A 研究員：第一語言資格審核\nB 研究員：正式回答轉寫", analysis: "語用偏誤必須註明題號與出現位置。", history: ["專案擁有者 · 剛剛", "陳研究員 · 昨日 16:42"] },
-    tasks: [{ id: "01", title: "問題一", audio: "stimulus-01.wav", published: true }, { id: "02", title: "問題二", audio: "stimulus-02.wav", published: true }]
+    tasks: [{ id: "01", title: "問題一", instructions: "請聽完問題後，以平常說話的速度回答。", audio: "stimulus-01.wav", src: "../assets/stimulus-01.wav", published: true }, { id: "02", title: "問題二", instructions: "請完整回答題目。", audio: "stimulus-02.wav", src: "../assets/stimulus-01.wav", published: true }]
   };
 }
 
@@ -84,7 +84,7 @@ let trashItems = [
 ];
 function trashItem(id, projectId, alias, bytes, deletedAt, daysLeft) { return { id, projectId, alias, bytes, deletedAt, daysLeft, kind: "sample" }; }
 
-const state = { projectId: "p1", selectedSampleId: null, samplePage: 1, selectedMemberEmail: null, createStep: 0, trashSelected: new Set(), capacitySyncedAt: "2026/10/8 10:15" };
+const state = { projectId: "p1", selectedSampleId: null, selectedTaskId: null, samplePage: 1, selectedMemberEmail: null, createStep: 0, trashSelected: new Set(), capacitySyncedAt: "2026/10/8 10:15" };
 const project = () => projects.find(item => item.id === state.projectId && !item.trashed) || projects.find(item => !item.trashed);
 const projectById = id => projects.find(item => item.id === id);
 const esc = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -172,10 +172,26 @@ function moveSampleToTrash(sample) { sample.trashed = true; const item = project
 
 function renderTagEditors() {
   const item = project(); const tagsRoot = $("#tag-editor"); tagsRoot.replaceChildren();
-  item.tags.forEach(tag => { const row = document.createElement("div"); row.className = "editor-row tag-editor-row"; row.innerHTML = `<span>⋮⋮</span><input value="${esc(tag.label)}"><label><input type="checkbox" ${tag.reason ? "checked" : ""}>需填原因</label><span>${tag.used} 份</span><button>${tag.active ? "停用" : "啟用"}</button>`; const inputs = $$("input", row); let previous = tag.label; inputs[0].oninput = () => { const next = inputs[0].value.trim(); if (!next) return; tag.label = next; samples.filter(sample => sample.projectId === item.id).forEach(sample => sample.tags = sample.tags.map(value => value === previous ? next : value)); previous = next; renderSampleFilters(); renderSamples(); toast("標籤名稱已全面同步"); }; inputs[1].onchange = () => tag.reason = inputs[1].checked; $("button", row).onclick = () => { tag.active = !tag.active; renderProject(); }; tagsRoot.append(row); });
-  const starsRoot = $("#star-definition-editor"); starsRoot.replaceChildren(); item.stars.forEach(star => { const row = document.createElement("div"); row.className = "editor-row"; row.innerHTML = `<i class="star ${star.color}">★</i><input value="${esc(star.label)}"><span>${star.used} 份</span><button>${star.active ? "停用" : "啟用"}</button>`; $("input", row).oninput = event => { const next = event.target.value.trim(); if (!next) return; star.label = next; renderSampleFilters(); renderSamples(); toast("星號文字已全面同步"); }; $("button", row).onclick = () => { star.active = !star.active; renderProject(); }; starsRoot.append(row); });
+  item.tags.forEach(tag => { const row = document.createElement("div"); row.className = "editor-row tag-editor-row"; row.innerHTML = `<span>⋮⋮</span><input value="${esc(tag.label)}"><label><input type="checkbox" ${tag.reason ? "checked" : ""}>需填原因</label><span>${tag.used} 份</span><button class="${tag.active ? "toggle-disable" : "toggle-enable"}">${tag.active ? "停用" : "啟用"}</button>`; const inputs = $$("input", row); let previous = tag.label; inputs[0].oninput = () => { const next = inputs[0].value.trim(); if (!next) return; tag.label = next; samples.filter(sample => sample.projectId === item.id).forEach(sample => sample.tags = sample.tags.map(value => value === previous ? next : value)); previous = next; renderSampleFilters(); renderSamples(); toast("標籤名稱已全面同步"); }; inputs[1].onchange = () => tag.reason = inputs[1].checked; $("button", row).onclick = () => { tag.active = !tag.active; renderProject(); }; tagsRoot.append(row); });
+  const starsRoot = $("#star-definition-editor"); starsRoot.replaceChildren(); item.stars.forEach(star => { const row = document.createElement("div"); row.className = "editor-row"; row.innerHTML = `<i class="star ${star.color}">★</i><input value="${esc(star.label)}"><span>${star.used} 份</span><button class="${star.active ? "toggle-disable" : "toggle-enable"}">${star.active ? "停用" : "啟用"}</button>`; $("input", row).oninput = event => { const next = event.target.value.trim(); if (!next) return; star.label = next; renderSampleFilters(); renderSamples(); toast("星號文字已全面同步"); }; $("button", row).onclick = () => { star.active = !star.active; renderProject(); }; starsRoot.append(row); });
 }
-function renderTasks() { const root = $("#task-list"); root.innerHTML = project().tasks.map(task => `<div class="item-row"><strong>${task.id}</strong><div><b>${esc(task.title)}</b><span>${esc(task.audio)}</span></div><span>${task.published ? "已發布" : "草稿"}</span><button class="secondary">編輯</button></div>`).join(""); }
+function renderTasks() {
+  const root = $("#task-list"); root.replaceChildren();
+  project().tasks.forEach(task => {
+    const row = document.createElement("div"); row.className = "task-wrap";
+    row.innerHTML = `<div class="item-row"><strong>${task.id}</strong><div><b>${esc(task.title)}</b><span>${esc(task.audio)}</span></div><span class="status-pill ${task.published ? "on" : "off"}">${task.published ? "啟用中" : "已停用"}</span><button class="secondary task-edit">${state.selectedTaskId === task.id ? "收合" : "編輯"}</button></div>`;
+    $(".task-edit", row).onclick = () => { state.selectedTaskId = state.selectedTaskId === task.id ? null : task.id; renderTasks(); };
+    if (state.selectedTaskId === task.id) row.append(renderTaskEditor(task)); root.append(row);
+  });
+}
+function renderTaskEditor(task) {
+  const editor = document.createElement("section"); editor.className = "task-editor";
+  editor.innerHTML = `<div class="task-form"><label>題目名稱<input class="task-title" value="${esc(task.title)}"></label><label>說明／註解<textarea class="task-instructions" rows="3">${esc(task.instructions || "")}</textarea></label><label>題目音檔 MP4／WAV<input class="task-media" type="file" accept=".mp4,.wav,audio/mp4,audio/wav,video/mp4"><small>${esc(task.audio || "尚未選擇檔案")}</small></label><label class="toggle-line"><input class="task-published" type="checkbox" ${task.published ? "checked" : ""}>在受試者端啟用</label></div><audio controls preload="metadata" src="${esc(task.src || "")}"></audio><div class="form-actions"><button type="button" class="secondary task-cancel">取消</button><button type="button" class="primary task-save">儲存題目</button></div>`;
+  $(".task-cancel", editor).onclick = () => { state.selectedTaskId = null; renderTasks(); };
+  $(".task-save", editor).onclick = () => { task.title = $(".task-title", editor).value.trim() || task.title; task.instructions = $(".task-instructions", editor).value; task.published = $(".task-published", editor).checked; state.selectedTaskId = null; renderTasks(); toast(`題目已儲存並設為${task.published ? "啟用中" : "已停用"}`); };
+  $(".task-media", editor).onchange = event => { const selected = event.target.files[0]; if (!selected) return; const error = validateMediaFile(selected); if (error) { event.target.value = ""; toast(error); return; } if (task.objectUrl) URL.revokeObjectURL(task.objectUrl); task.audio = selected.name; task.objectUrl = URL.createObjectURL(selected); task.src = task.objectUrl; renderTasks(); toast("題目音檔已加入草稿"); };
+  return editor;
+}
 function renderNotes() { const notes = project().notes; $("#division-note").value = notes.division; $("#analysis-note").value = notes.analysis; $("#note-history").innerHTML = notes.history.map(row => `<li>${esc(row)}</li>`).join(""); }
 
 function renderPermissionPicker(root, selected, prefix) { root.innerHTML = Object.entries(permissionGroups).map(([group, permissions]) => `<section class="permission-group"><strong>${group}</strong>${permissions.map(([key, label]) => `<label><input type="checkbox" name="${prefix}" value="${key}" ${selected.includes(key) ? "checked" : ""}>${label}</label>`).join("")}</section>`).join(""); }
@@ -265,7 +281,7 @@ $("#sample-search").oninput = () => { state.samplePage = 1; renderSamples(); };
 $("#clear-filters").onclick = () => { $$('.filters input[type="checkbox"]').forEach(input => input.checked = false); $("#sample-search").value = ""; state.samplePage = 1; renderSamples(); };
 $("#export-results").onclick = () => toast(`已準備匯出 ${filteredSamples().length} 份篩選結果`);
 $("#add-tag").onclick = () => { project().tags.push({ label: `新標籤 ${project().tags.length + 1}`, used: 0, reason: true, active: true }); renderProject(); };
-$("#add-task").onclick = () => { const number = project().tasks.length + 1; project().tasks.push({ id: String(number).padStart(2, "0"), title: `問題${number}`, audio: "尚未上傳", published: false }); renderTasks(); toast("已新增題目草稿"); };
+$("#add-task").onclick = () => { const number = project().tasks.length + 1; const task = { id: String(number).padStart(2, "0"), title: `問題${number}`, instructions: "", audio: "尚未上傳", src: "", published: false }; project().tasks.push(task); state.selectedTaskId = task.id; renderTasks(); toast("已新增題目，請完成內容後儲存"); };
 $("#member-form").elements.is_admin.onchange = event => $("#permission-section").hidden = !event.target.checked;
 $("#member-form").onsubmit = event => { event.preventDefault(); const form = event.currentTarget; const email = form.elements.email.value.trim().toLowerCase(); if (project().members.some(member => member.email === email)) { toast("這個 email 已在專案中"); return; } const admin = form.elements.is_admin.checked; project().members.push({ email, displayName: form.elements.display_name.value.trim(), owner: false, admin, permissions: admin ? checkedValues("new-permission") : [...researcherDefaults] }); form.reset(); $("#permission-section").hidden = true; renderProject(); toast("研究人員已加入並同步權限"); };
 $("#revoke-all").onclick = () => confirmAction("撤銷所有其他研究人員", "保留最高階專案擁有者，撤銷其他研究人員的本專案存取權。", project().name, () => { project().members = project().members.filter(member => member.owner); samples.filter(sample => sample.projectId === project().id).forEach(sample => sample.assignee = null); state.selectedMemberEmail = null; renderProject(); toast("已撤銷所有其他研究人員"); });
