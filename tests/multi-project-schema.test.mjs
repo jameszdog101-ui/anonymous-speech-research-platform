@@ -101,8 +101,16 @@ test("project designer preserves the complete participant form surface", async (
   assert.match(script, /在受試者端啟用/);
   assert.match(script, /啟用中/);
   assert.match(script, /已停用/);
-  assert.match(script, /toggle-disable/);
-  assert.match(script, /toggle-enable/);
+  assert.match(html, /新增星號標籤/);
+  assert.match(script, /function removeTag/);
+  assert.match(script, /function removeStar/);
+  assert.match(script, /type="color"/);
+  assert.match(script, /專案擁有者顯示名稱已在系統同步/);
+  assert.match(script, /移除題目/);
+  assert.match(script, /刪除目前自訂頁面/);
+  assert.match(script, /自訂頁面已刪除/);
+  assert.doesNotMatch(script, /tag\.active = !tag\.active/);
+  assert.doesNotMatch(script, /star\.active = !star\.active/);
   assert.match(designSql, /completion_download/);
   assert.match(capacitySql, /project_media_assets/);
   assert.match(capacitySql, /video\/mp4/);
