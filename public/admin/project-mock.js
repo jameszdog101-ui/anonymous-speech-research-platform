@@ -5,7 +5,6 @@ const MB = 1024 ** 2;
 const FREE_R2_BYTES = 10 * GB;
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
 const ALLOWED_MEDIA_EXTENSIONS = [".mp4", ".wav"];
-const currentResearcher = "王研究員";
 const pageSize = 10;
 
 const statusLabels = { collecting: "收件中", closed: "已關閉", draft: "草稿", archived: "已封存" };
@@ -88,7 +87,7 @@ function makeProject(id, name, slug, status, activeBytes, trashBytes, sampleCoun
     tags: [{ label: "語音偏誤", used: 34, reason: true }, { label: "句法偏誤", used: 21, reason: true }, { label: "語用偏誤", used: 12, reason: true }],
     stars: [{ color: "red", hex: "#d95c45", label: "報告用", used: 34, active: true }, { color: "gold", hex: "#b77b15", label: "典型樣本", used: 19, active: true }, { color: "blue", hex: "#3478a6", label: "討論案例", used: 11, active: true }],
     members: [
-      { email: "owner@protected.invalid", displayName: "專案擁有者", owner: true, admin: true, permissions: allPermissions },
+      { email: "owner@protected.invalid", displayName: "James", owner: true, admin: true, permissions: allPermissions },
       { email: "researcher-a@example.edu", displayName: "王研究員", owner: false, admin: true, permissions: allPermissions.filter(key => !key.includes("member_assign")) },
       { email: "researcher-b@example.edu", displayName: "陳研究員", owner: false, admin: false, permissions: [...researcherDefaults] }
     ],
@@ -130,6 +129,18 @@ function persistWorkspace() {
 const state = { projectId: "p1", selectedSampleId: null, selectedTaskId: null, samplePage: 1, selectedMemberEmail: null, createStep: 0, trashSelected: new Set(), capacitySyncedAt: "2026/10/8 10:15" };
 const project = () => projects.find(item => item.id === state.projectId && !item.trashed) || projects.find(item => !item.trashed);
 const projectById = id => projects.find(item => item.id === id);
+const currentResearcherMember = (item = project()) => item?.members.find(member => member.owner) || null;
+const currentResearcherName = (item = project()) => currentResearcherMember(item)?.displayName || "目前登入者";
+function repairLegacyCurrentResearcherAssignments() {
+  samples.forEach(sample => {
+    const item = projectById(sample.projectId); const ownerName = currentResearcherName(item);
+    const legacySelfAssignment = sample.analysisStatus === "in_progress" && sample.assignee === "王研究員" && sample.changes.some(change => change.endsWith("王研究員 開始分析"));
+    if (!legacySelfAssignment || ownerName === "王研究員" || ownerName === "目前登入者") return;
+    sample.assignee = ownerName;
+    sample.changes = sample.changes.map(change => change.endsWith("王研究員 開始分析") ? change.replace(/王研究員 開始分析$/, `${ownerName} 開始分析`) : change);
+  });
+}
+repairLegacyCurrentResearcherAssignments();
 const esc = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 const shortId = id => `${id.slice(0, 8)}…${id.slice(-4)}`;
 const formatBytes = bytes => bytes >= GB ? `${(bytes / GB).toFixed(2)} GB` : `${(bytes / MB).toFixed(1)} MB`;
@@ -166,6 +177,7 @@ function renderHome() {
 function openProject(id) { state.projectId = id; state.selectedSampleId = null; state.samplePage = 1; renderProject(); switchMain("projects"); switchProjectPane("overview"); }
 function renderProject() {
   renderProjectNavigation(); const item = project(); if (!item) return;
+  $("#current-account-name").textContent = currentResearcherName(item);
   $("#overview-name").textContent = item.name;
   $("#project-metrics").innerHTML = metric("專案樣本", item.sampleCount, `上限 ${item.maxSubmissions} 份`) + metric("專案容量", formatBytes(projectTotal(item)), `占免費額度 ${pct(projectTotal(item), FREE_R2_BYTES)}`) + metric("研究人員", item.members.length, `${item.members.filter(member => member.admin).length} 位管理者`) + metric("垃圾桶", formatBytes(item.trashBytes), `${trashItems.filter(row => row.projectId === item.id).length} 項等待清除`, "warn");
   $("#publish-summary").innerHTML = [["受試者端", statusLabels[item.status]], ["題目版本", item.version ? `第 ${item.version} 版` : "尚未發布"], ["最高收錄數量", `${item.maxSubmissions} 份`], ["最近發布", item.publishedAt]].map(([term, value]) => `<div><dt>${term}</dt><dd>${esc(value)}</dd></div>`).join("");
@@ -195,15 +207,15 @@ function renderSamples() {
   const pagination = $("#pagination"); pagination.replaceChildren(); for (let number = 1; number <= pages; number++) { const button = document.createElement("button"); button.textContent = number; button.classList.toggle("active", number === state.samplePage); button.onclick = () => { state.samplePage = number; state.selectedSampleId = null; renderSamples(); }; pagination.append(button); }
 }
 function renderSampleDetail(sample) {
-  const detail = document.createElement("section"); detail.className = "inline-detail"; const completedByOther = sample.analysisStatus === "completed" && sample.completedBy !== currentResearcher;
+  const detail = document.createElement("section"); detail.className = "inline-detail"; const researcher = currentResearcherName(); const completedByOther = sample.analysisStatus === "completed" && sample.completedBy !== researcher;
   detail.innerHTML = `<header class="detail-head"><div><label>研究化名<input class="alias-input" value="${esc(sample.alias)}"></label><p>${sample.id}</p></div><strong>${formatBytes(sample.bytes)}</strong></header><section class="assignment"><div><strong>負責研究人員</strong><span>${esc(sample.assignee || "尚未指派")}</span></div><button class="claim">${sample.assignee ? "改由我負責" : "由我負責"}</button><label>分析狀態<select class="analysis-status"><option value="in_progress">正在分析</option><option value="completed">完成分析</option></select></label></section>${completedByOther ? `<section class="edit-mode"><strong>${esc(sample.completedBy)} 已完成分析，請選擇異動方式</strong><div><button data-mode="comment">增加註解</button><button data-mode="modify">直接修改</button></div><textarea hidden rows="3"></textarea></section>` : ""}<section class="change-log"><h3>分析紀錄</h3>${sample.changes.length ? sample.changes.map(change => `<p>${esc(change)}</p>`).join("") : "<span>尚無異動紀錄</span>"}</section><section class="detail-section"><h3>第一語言資格</h3><div class="eligibility">${["符合", "不符合", "無法判定"].map(value => `<button data-value="${value}" class="${sample.eligibility === value ? "selected" : ""}">${value}</button>`).join("")}</div><audio controls src="../assets/device-test-music.wav"></audio><textarea rows="2" placeholder="資格判定理由"></textarea></section><section class="detail-section"><h3>該專案彩色星號的標籤</h3><div class="star-picker"><button class="star-option ${!sample.star ? "selected" : ""}" data-star="">× <span>移除</span></button>${project().stars.map(star => `<button class="star-option ${sample.star === star.color ? "selected" : ""}" data-star="${star.color}"><i class="star ${star.color}">★</i><span>${esc(star.label)}</span></button>`).join("")}</div></section><section class="detail-section"><h3>問題一回答分析</h3><audio controls src="../assets/stimulus-01.wav"></audio><label>回答文字<textarea class="answer" rows="4" placeholder="輸入受試者所說的文字">${esc(sample.answer)}</textarea></label><div class="analysis-tags"></div></section><div class="form-actions"><button class="secondary finish-edit">結束編輯</button><button class="danger move-trash">移至垃圾桶</button></div>`;
   $$('[data-star]', detail).forEach(button => { const icon = $(".star", button); const star = project().stars.find(item => item.color === button.dataset.star); if (icon && star) icon.style.color = starHex(star); });
   $(".alias-input", detail).oninput = event => { const next = event.target.value.trim(); if (!next) return; sample.alias = next; const heading = detail.previousElementSibling?.querySelector("h3"); if (heading) heading.textContent = `${sample.alias} · ${sample.eligibility}`; toast("研究化名已同步"); };
-  $(".claim", detail).onclick = () => { sample.assignee = currentResearcher; sample.analysisStatus = "in_progress"; sample.changes.push(nowChange(`${currentResearcher} 開始分析`)); renderSamples(); toast("已指派給目前登入的研究人員"); };
+  $(".claim", detail).onclick = () => { sample.assignee = researcher; sample.analysisStatus = "in_progress"; sample.changes.push(nowChange(`${researcher} 開始分析`)); renderSamples(); toast(`已指派給 ${researcher}`); };
   const status = $(".analysis-status", detail); status.value = sample.analysisStatus === "unassigned" ? "in_progress" : sample.analysisStatus; status.onchange = () => updateAnalysisStatus(sample, status.value);
   $$(".eligibility button", detail).forEach(button => button.onclick = () => { sample.eligibility = button.dataset.value; renderSamples(); toast("資格判定已儲存"); });
   $$('[data-star]', detail).forEach(button => button.onclick = () => { sample.star = button.dataset.star || null; renderSamples(); toast("星號標籤已同步"); });
-  $$("[data-mode]", detail).forEach(button => button.onclick = () => { const mode = button.dataset.mode === "comment" ? "增加註解" : "直接修改"; const box = $(".edit-mode textarea", detail); box.hidden = false; box.placeholder = `${mode}內容`; sample.changes.push(nowChange(`${currentResearcher} ${mode}`)); toast(`${mode}模式已開啟`); });
+  $$("[data-mode]", detail).forEach(button => button.onclick = () => { const mode = button.dataset.mode === "comment" ? "增加註解" : "直接修改"; const box = $(".edit-mode textarea", detail); box.hidden = false; box.placeholder = `${mode}內容`; sample.changes.push(nowChange(`${researcher} ${mode}`)); toast(`${mode}模式已開啟`); });
   $(".answer", detail).oninput = event => { sample.answer = event.target.value; toast("回答文字已自動儲存"); };
   const analysisRoot = $(".analysis-tags", detail); project().tags.forEach(tag => { const block = document.createElement("div"); block.className = "analysis-block"; block.innerHTML = `<label><input type="checkbox"><span>${esc(tag.label)}</span></label><div class="reason" hidden><label>出現位置或判定原因<textarea rows="3"></textarea></label></div>`; const checkbox = $("input", block); checkbox.checked = sample.tags.includes(tag.label); $(".reason", block).hidden = !checkbox.checked; $("textarea", block).value = sample.reasons[tag.label] || ""; checkbox.onchange = () => { sample.tags = checkbox.checked ? [...new Set([...sample.tags, tag.label])] : sample.tags.filter(value => value !== tag.label); $(".reason", block).hidden = !checkbox.checked; renderSamples(); toast("分析標籤已同步"); }; $("textarea", block).oninput = event => sample.reasons[tag.label] = event.target.value; analysisRoot.append(block); });
   $(".finish-edit", detail).onclick = () => finishEditing(sample);
@@ -211,8 +223,8 @@ function renderSampleDetail(sample) {
   return detail;
 }
 function nowChange(text) { return `2026.10.8 12:21 ${text}`; }
-function updateAnalysisStatus(sample, value) { sample.assignee ||= currentResearcher; sample.analysisStatus = value; if (value === "completed") sample.completedBy = currentResearcher; sample.changes.push(nowChange(`${currentResearcher} ${value === "completed" ? "完成分析" : "正在分析"}`)); renderSamples(); toast("分析狀態已自動儲存"); }
-function finishEditing(sample) { if (sample.analysisStatus === "completed") { state.selectedSampleId = null; renderSamples(); return; } const dialog = $("#completion-dialog"); dialog.returnValue = ""; dialog.showModal(); dialog.onclose = () => { if (dialog.returnValue === "complete") updateAnalysisStatus(sample, "completed"); else { sample.assignee ||= currentResearcher; sample.analysisStatus = "in_progress"; state.selectedSampleId = null; renderSamples(); } }; }
+function updateAnalysisStatus(sample, value) { const researcher = currentResearcherName(); sample.assignee ||= researcher; sample.analysisStatus = value; if (value === "completed") sample.completedBy = researcher; sample.changes.push(nowChange(`${researcher} ${value === "completed" ? "完成分析" : "正在分析"}`)); renderSamples(); toast("分析狀態已自動儲存"); }
+function finishEditing(sample) { if (sample.analysisStatus === "completed") { state.selectedSampleId = null; renderSamples(); return; } const dialog = $("#completion-dialog"); dialog.returnValue = ""; dialog.showModal(); dialog.onclose = () => { if (dialog.returnValue === "complete") updateAnalysisStatus(sample, "completed"); else { sample.assignee ||= currentResearcherName(); sample.analysisStatus = "in_progress"; state.selectedSampleId = null; renderSamples(); } }; }
 function moveSampleToTrash(sample) { sample.trashed = true; const item = projectById(sample.projectId); item.sampleCount = Math.max(0, item.sampleCount - 1); item.activeBytes = Math.max(0, item.activeBytes - sample.bytes); item.trashBytes += sample.bytes; trashItems.push(trashItem(`t-${sample.id}`, sample.projectId, sample.alias, sample.bytes, "2026-10-08", 30)); state.selectedSampleId = null; renderAll(); toast("樣本已移至垃圾桶"); }
 
 function renderTagEditors() {
@@ -368,7 +380,7 @@ $("#add-task").onclick = () => { const number = Math.max(0, ...project().tasks.m
 $("#member-form").elements.is_admin.onchange = event => $("#permission-section").hidden = !event.target.checked;
 $("#member-form").onsubmit = event => { event.preventDefault(); const form = event.currentTarget; const email = form.elements.email.value.trim().toLowerCase(); if (project().members.some(member => member.email === email)) { toast("這個 email 已在專案中"); return; } const admin = form.elements.is_admin.checked; project().members.push({ email, displayName: form.elements.display_name.value.trim(), owner: false, admin, permissions: admin ? checkedValues("new-permission") : [...researcherDefaults] }); form.reset(); $("#permission-section").hidden = true; renderProject(); toast("研究人員已加入並同步權限"); };
 $("#revoke-all").onclick = () => confirmAction("撤銷所有其他研究人員", "保留最高階專案擁有者，撤銷其他研究人員的本專案存取權。", project().name, () => { project().members = project().members.filter(member => member.owner); samples.filter(sample => sample.projectId === project().id).forEach(sample => sample.assignee = null); state.selectedMemberEmail = null; renderProject(); toast("已撤銷所有其他研究人員"); });
-$$('.autosave').forEach(textarea => textarea.oninput = () => { const notes = project().notes; notes.division = $("#division-note").value; notes.analysis = $("#analysis-note").value; const label = $("#save-state"); label.textContent = "正在儲存…"; label.classList.add("saving"); clearTimeout(renderNotes.timer); renderNotes.timer = setTimeout(() => { notes.history.unshift(`${currentResearcher} · 剛剛`); label.textContent = "所有變更已儲存 · 剛剛"; label.classList.remove("saving"); }, 700); });
+$$('.autosave').forEach(textarea => textarea.oninput = () => { const notes = project().notes; notes.division = $("#division-note").value; notes.analysis = $("#analysis-note").value; const label = $("#save-state"); label.textContent = "正在儲存…"; label.classList.add("saving"); clearTimeout(renderNotes.timer); renderNotes.timer = setTimeout(() => { notes.history.unshift(`${currentResearcherName()} · 剛剛`); label.textContent = "所有變更已儲存 · 剛剛"; label.classList.remove("saving"); }, 700); });
 $("#project-design-form").onsubmit = event => { event.preventDefault(); saveDesign(); toast("專案設計草稿已儲存"); };
 $("#project-design-form").oninput = () => { $("#project-save-state").textContent = "尚未儲存的變更"; const form = $("#project-design-form"); const item = hydrateProject(project()); readGovernanceForm(item, form); const page = item.pages.find(row => row.key === item.selectedPage); if (page) { page.title = form.elements.pageTitle.value; page.body = form.elements.pageBody.value; item.footer = form.elements.footer.value; } renderParticipantPreview(); renderPublishAudit(); };
 $("#open-governance").onclick = () => { project().selectedPage = "governance"; renderDesigner(); };

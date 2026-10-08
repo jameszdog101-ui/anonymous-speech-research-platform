@@ -157,6 +157,18 @@ test("researcher and participant ports use fixed product branding and an interac
   assert.match(css, /width:18px!important/);
 });
 
+test("sample assignments use the protected signed-in owner instead of a hard-coded researcher name", async () => {
+  const html = await readFile(new URL("../public/admin/project-mock.html", import.meta.url), "utf8");
+  const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
+
+  assert.match(html, /id="current-account-name"/);
+  assert.match(script, /currentResearcherMember/);
+  assert.match(script, /currentResearcherName/);
+  assert.match(script, /repairLegacyCurrentResearcherAssignments/);
+  assert.match(script, /已指派給 \$\{researcher\}/);
+  assert.doesNotMatch(script, /const currentResearcher = "王研究員"/);
+});
+
 test("research governance and consent publications are project-scoped and versioned", async () => {
   const sql = await readFile(new URL("../worker/migrations/0005_research_governance_and_consent.sql", import.meta.url), "utf8");
   assert.match(sql, /CREATE TABLE IF NOT EXISTS project_research_governance/);
