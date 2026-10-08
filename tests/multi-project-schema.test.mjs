@@ -50,6 +50,15 @@ test("researcher mock page exposes the confirmed project workflows", async () =>
   assert.match(script, /研究化名/);
   assert.match(script, /出現位置或判定原因/);
   assert.match(script, /audio controls/);
+  assert.match(html, /該專案彩色星號的標籤/);
+  assert.match(html, /使用者名稱/);
+  assert.match(script, /pageSize=10/);
+  assert.match(script, /負責研究人員/);
+  assert.match(script, /正在分析/);
+  assert.match(script, /完成分析/);
+  assert.match(script, /增加註解/);
+  assert.match(script, /直接修改/);
+  assert.match(script, /inline-detail/);
   assert.doesNotMatch(html, /多重偏誤/);
 });
 
