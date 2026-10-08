@@ -32,3 +32,17 @@ test("unmarked remains a derived filter instead of a stored sample tag", async (
   assert.doesNotMatch(sql, /unmarked/i);
 });
 
+test("researcher mock page exposes the confirmed project workflows", async () => {
+  const html = await readFile(new URL("../public/admin/project-mock.html", import.meta.url), "utf8");
+  const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
+
+  assert.match(html, /專案編輯/);
+  assert.match(html, /研究人員筆記/);
+  assert.match(html, /垃圾桶/);
+  assert.match(html, /預計 30 天內釋放/);
+  assert.match(html, /模擬資料，非即時帳務/);
+  assert.match(script, /tag\.label=input\.value/);
+  assert.match(script, /setTimeout\(\(\)=>\{state\.textContent="所有變更已儲存/);
+  assert.doesNotMatch(html, /多重偏誤/);
+});
+

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>多專案研究後台模擬頁</title>
+  <link rel="stylesheet" href="./project-mock.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./project-mock.html" aria-label="研究平台模擬首頁">
+      <img src="../assets/research-mark.svg" width="38" height="38" alt="">
+      <span><strong>匿名語音研究平台</strong><small>研究者端介面模擬</small></span>
+    </a>
+    <nav aria-label="研究者功能">
+      <button class="nav-button active" data-view="samples">樣本</button>
+      <button class="nav-button" data-view="settings">專案編輯</button>
+      <button class="nav-button" data-view="notes">研究筆記</button>
+      <button class="nav-button" data-view="trash">垃圾桶</button>
+    </nav>
+    <div class="account"><span>最高階研究員</span><strong>專案擁有者</strong></div>
+  </header>
+
+  <main>
+    <section class="project-bar">
+      <label>目前研究專案
+        <select id="project-select">
+          <option>華語語調研究 2026</option>
+          <option>第二語言敘事研究</option>
+        </select>
+      </label>
+      <div class="project-meta"><span class="state">收件中</span><span>研究者 4 人</span><span>樣本 128 份</span></div>
+      <button type="button" id="copy-url" class="secondary">複製受試者網址</button>
+    </section>
+
+    <div id="toast" class="toast" role="status" hidden></div>
+
+    <section class="view active" data-panel="samples">
+      <header class="page-title"><div><p>專案樣本</p><h1>提交、標記與分析</h1></div><button class="primary" type="button">匯出篩選結果</button></header>
+      <section class="capacity" aria-label="模擬容量資料">
+        <div><span>本專案容量</span><strong>1.84 GB</strong><small>占全部專案 36.1%</small></div>
+        <div><span>Cloudflare R2 免費額度</span><strong>18.4%</strong><small>依平台音檔統計推算</small></div>
+        <div><span>全部專案使用中</span><strong>5.10 GB</strong><small>模擬資料，非即時帳務</small></div>
+        <div><span>預計 30 天內釋放</span><strong>0.70 GB</strong><small>占目前使用容量 13.7%</small></div>
+      </section>
+
+      <section class="sample-workspace">
+        <aside class="filters">
+          <div class="section-heading"><h2>篩選樣本</h2><button id="clear-filters" type="button">清除</button></div>
+          <fieldset><legend>樣本標籤</legend>
+            <label><input type="checkbox" name="filter-tag" value="語音偏誤">語音偏誤 <span>34</span></label>
+            <label><input type="checkbox" name="filter-tag" value="句法偏誤">句法偏誤 <span>21</span></label>
+            <label><input type="checkbox" name="filter-tag" value="語用偏誤">語用偏誤 <span>12</span></label>
+            <label><input type="checkbox" name="filter-tag" value="未標記">未標記 <span>46</span></label>
+          </fieldset>
+          <fieldset><legend>星號</legend>
+            <label><input type="checkbox" name="filter-star" value="red"><i class="star red">★</i>優先複核</label>
+            <label><input type="checkbox" name="filter-star" value="gold"><i class="star gold">★</i>典型樣本</label>
+            <label><input type="checkbox" name="filter-star" value="blue"><i class="star blue">★</i>討論案例</label>
+          </fieldset>
+          <label class="select-label">標籤符合方式<select id="match-mode"><option value="any">符合任一標籤</option><option value="all">符合全部標籤</option></select></label>
+        </aside>
+
+        <div class="sample-list">
+          <div class="list-toolbar"><div><strong id="sample-count">4 份樣本</strong><span>容量合計 75.2 MB</span></div><input id="sample-search" type="search" placeholder="搜尋化名或匿名編號"></div>
+          <div id="sample-rows"></div>
+        </div>
+
+        <aside class="sample-detail" id="sample-detail">
+          <div class="empty-detail"><strong>選擇一份樣本</strong><span>檢視錄音、分析標籤與研究備註。</span></div>
+        </aside>
+      </section>
+    </section>
+
+    <section class="view" data-panel="settings">
+      <header class="page-title"><div><p>最高階研究員設定</p><h1>專案編輯</h1></div><span class="owner-only">僅專案擁有者可變更</span></header>
+      <div class="settings-grid">
+        <section class="panel"><div class="panel-title"><div><h2>樣本標籤</h2><p>依本專案分析目的自訂研究人員可勾選的欄位。</p></div><button id="add-tag" class="primary" type="button">新增標籤</button></div><div id="tag-editor" class="editor-list"></div><p class="hint">「未標記」由系統判斷，不是可編輯或套用的標籤。已使用的標籤只能停用。</p></section>
+        <section class="panel"><div class="panel-title"><div><h2>星號顏色定義</h2><p>每份樣本可套用一個彩色星號，顏色會連同文字意義顯示。</p></div></div><div id="star-editor" class="editor-list"></div></section>
+      </div>
+    </section>
+
+    <section class="view" data-panel="notes">
+      <header class="page-title"><div><p>協作資訊</p><h1>研究人員筆記</h1></div><span id="save-state" class="save-state">所有變更已儲存</span></header>
+      <div class="notes-layout">
+        <section class="panel note-panel"><label>研究人員分工<textarea class="autosave" rows="8">A 研究員：第一語言資格審核\nB 研究員：正式回答轉寫\nC 研究員：標籤複核與爭議案例整理</textarea></label><small>請記錄角色與工作範圍，避免填寫參與者身分資訊。</small></section>
+        <section class="panel note-panel"><label>其他專案備註<textarea class="autosave" rows="8">每週五整理藍色星號案例。\n有爭議的分析先保留原標籤，再於例會討論。</textarea></label><small>自動儲存，並保留修訂版本、編輯者與時間。</small></section>
+        <aside class="panel history"><h2>最近修訂</h2><ol><li><strong>專案擁有者</strong><span>剛剛更新分工</span></li><li><strong>researcher-b</strong><span>昨日 16:42 更新備註</span></li><li><strong>researcher-a</strong><span>10 月 6 日建立筆記</span></li></ol></aside>
+      </div>
+    </section>
+
+    <section class="view" data-panel="trash">
+      <header class="page-title"><div><p>資料生命週期</p><h1>垃圾桶</h1></div><button class="danger" type="button">永久清空垃圾桶</button></header>
+      <div class="trash-summary"><strong>6 份樣本，共 0.70 GB</strong><span>預計 30 天內釋放：0.70 GB（占目前使用容量 13.7%）</span></div>
+      <section class="panel trash-list"><div class="trash-row"><div><strong>早川</strong><span>匿名編號 82b4…90fa · 41.8 MB</span></div><span>剩餘 24 天</span><button type="button">還原</button><button class="text-danger" type="button">永久刪除</button></div><div class="trash-row"><div><strong>Case K-17</strong><span>匿名編號 e901…2ce1 · 22.4 MB</span></div><span>剩餘 28 天</span><button type="button">還原</button><button class="text-danger" type="button">永久刪除</button></div></section>
+    </section>
+  </main>
+
+  <script src="./project-mock.js"></script>
+</body>
+</html>
