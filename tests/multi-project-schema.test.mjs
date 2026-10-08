@@ -114,6 +114,10 @@ test("project designer preserves the complete participant form surface", async (
   assert.match(script, /function publishAudit/);
   assert.match(script, /完全匿名\|保證匿名/);
   assert.match(script, /研究事後說明/);
+  assert.match(script, /事後說明完整內容/);
+  assert.match(script, /debriefing-content/);
+  assert.match(script, /project\(\)\.governance\.debriefing = event\.target\.value/);
+  assert.match(script, /右側預覽及完整受試者預覽使用同一版本/);
   assert.doesNotMatch(script, /tag\.active = !tag\.active/);
   assert.doesNotMatch(script, /star\.active = !star\.active/);
   assert.match(designSql, /completion_download/);
