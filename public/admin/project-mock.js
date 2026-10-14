@@ -165,17 +165,54 @@ async function bootstrapWorkspace() {
       workspaceRevision = Number(data.revision || 0);
     }
     protectWorkspaceOwner(data.identity);
+    const importedSubmissions = await mergeServerSubmissions();
     const canWrite = Boolean(data.is_owner);
     workspaceConnected = false;
     renderAll(); renderCreateStep();
     toast(data.workspace ? `已連線 D1 工作區 · 第 ${workspaceRevision} 版` : "正在建立正式 D1 工作區");
     workspaceConnected = canWrite;
-    if (!data.workspace && canWrite) await saveWorkspaceOnline();
+    if ((!data.workspace || importedSubmissions) && canWrite) await saveWorkspaceOnline();
   } catch (error) {
     workspaceConnected = false;
     renderAll(); renderCreateStep();
     toast(`目前使用本機備援：${error.message}`);
   }
+}
+
+function submissionProject(submission) {
+  return projects.find(item => item.id === submission.project_id || item.slug === submission.study_id) || projects.find(item => !item.trashed && item.status === "collecting") || projects.find(item => !item.trashed && item.status === "draft") || projects.find(item => !item.trashed) || null;
+}
+
+function parseLanguages(value) {
+  try { const result = JSON.parse(value || "[]"); return Array.isArray(result) ? result : []; } catch { return []; }
+}
+
+async function mergeServerSubmissions() {
+  const response = await fetch("./api/submissions", { headers: { Accept: "application/json" } });
+  if (!response.ok) return false;
+  const data = await response.json();
+  const serverIds = new Set((data.submissions || []).map(submission => submission.id));
+  let changed = false;
+  for (const submission of data.submissions || []) {
+    const item = submissionProject(submission);
+    if (!item) continue;
+    const languages = parseLanguages(submission.second_languages_json);
+    const metadata = { studyId: submission.study_id, studyVersion: submission.study_version, ageGroup: submission.age_group, biologicalSex: submission.biological_sex, nationality: submission.nationality, languageBackground: submission.language_background, firstLanguage: submission.first_language, secondLanguage: "中文（普通話）", otherLanguages: languages.filter(language => !/中文|普通話|mandarin|chinese/i.test(language)), mandarinLearningYears: submission.mandarin_learning_years, submittedAt: submission.completed_at || submission.created_at };
+    const existing = samples.find(sample => sample.id === submission.id);
+    if (existing) {
+      if (existing.projectId !== item.id) changed = true;
+      existing.projectId = item.id; existing.metadata = metadata; existing.bytes = Number(submission.audio_bytes || existing.bytes || 0);
+      if (submission.eligibility_status) existing.eligibility = ({ eligible: "符合", ineligible: "不符合", undetermined: "無法判定" })[submission.eligibility_status];
+      continue;
+    }
+    samples.push({ id: submission.id, projectId: item.id, alias: `Case ${submission.id.slice(0, 8)}`, bytes: Number(submission.audio_bytes || 0), tags: [], reasons: {}, star: null, eligibility: ({ eligible: "符合", ineligible: "不符合", undetermined: "無法判定" })[submission.eligibility_status] || "無法判定", assignee: null, analysisStatus: "unassigned", completedBy: null, answer: "", changes: [], metadata, trashed: false });
+    changed = true;
+  }
+  const before = samples.length;
+  samples = samples.filter(sample => serverIds.has(sample.id));
+  if (samples.length !== before) changed = true;
+  projects.forEach(item => { const active = samples.filter(sample => sample.projectId === item.id && !sample.trashed); item.sampleCount = active.length; item.activeBytes = active.reduce((sum, sample) => sum + Number(sample.bytes || 0), 0); });
+  return changed;
 }
 
 async function uploadWorkspaceTaskAudio(file, task, block) {
@@ -272,6 +309,8 @@ function renderSamples() {
 function renderSampleDetail(sample) {
   const detail = document.createElement("section"); detail.className = "inline-detail"; const researcher = currentResearcherName(); const completedByOther = sample.analysisStatus === "completed" && sample.completedBy !== researcher;
   detail.innerHTML = `<header class="detail-head"><div><label>研究化名<input class="alias-input" value="${esc(sample.alias)}"></label><p>${sample.id}</p></div><strong>${formatBytes(sample.bytes)}</strong></header><section class="assignment"><div><strong>負責研究人員</strong><span>${esc(sample.assignee || "尚未指派")}</span></div><button class="claim">${sample.assignee ? "改由我負責" : "由我負責"}</button><label>分析狀態<select class="analysis-status"><option value="in_progress">正在分析</option><option value="completed">完成分析</option></select></label></section>${completedByOther ? `<section class="edit-mode"><strong>${esc(sample.completedBy)} 已完成分析，請選擇異動方式</strong><div><button data-mode="comment">增加註解</button><button data-mode="modify">直接修改</button></div><textarea hidden rows="3"></textarea></section>` : ""}<section class="change-log"><h3>分析紀錄</h3>${sample.changes.length ? sample.changes.map(change => `<p>${esc(change)}</p>`).join("") : "<span>尚無異動紀錄</span>"}</section><section class="detail-section"><h3>第一語言資格</h3><div class="eligibility">${["符合", "不符合", "無法判定"].map(value => `<button data-value="${value}" class="${sample.eligibility === value ? "selected" : ""}">${value}</button>`).join("")}</div><audio controls src="../assets/device-test-music.wav"></audio><textarea rows="2" placeholder="資格判定理由"></textarea></section><section class="detail-section"><h3>該專案彩色星號的標籤</h3><div class="star-picker"><button class="star-option ${!sample.star ? "selected" : ""}" data-star="">× <span>移除</span></button>${project().stars.map(star => `<button class="star-option ${sample.star === star.color ? "selected" : ""}" data-star="${star.color}"><i class="star ${star.color}">★</i><span>${esc(star.label)}</span></button>`).join("")}</div></section><section class="detail-section"><h3>問題一回答分析</h3><audio controls src="../assets/stimulus-01.wav"></audio><label>回答文字<textarea class="answer" rows="4" placeholder="輸入受試者所說的文字">${esc(sample.answer)}</textarea></label><div class="analysis-tags"></div></section><div class="form-actions"><button class="secondary finish-edit">結束編輯</button><button class="danger move-trash">移至垃圾桶</button></div>`;
+  const metadata = sample.metadata || {}; const nationality = project().governance?.collectNationality === "yes" ? metadata.nationality || "未填寫" : "本專案未蒐集"; const sex = ({ male: "男性", female: "女性" })[metadata.biologicalSex] || metadata.biologicalSex || "未填寫";
+  const metadataPanel = document.createElement("section"); metadataPanel.className = "participant-metadata"; metadataPanel.innerHTML = `<div><span>年齡區間</span><strong>${esc(metadata.ageGroup || "未填寫")}</strong></div><div><span>生理性別／轉換設定</span><strong>${esc(sex)}</strong></div><div><span>國籍</span><strong>${esc(nationality)}</strong></div><div><span>第一語言</span><strong>${esc(metadata.firstLanguage || "未填寫")}</strong></div><div><span>第二語言</span><strong>${esc(metadata.secondLanguage || "中文（普通話）")}</strong></div><div><span>中文學習時間</span><strong>${metadata.mandarinLearningYears == null ? "未填寫" : `${esc(metadata.mandarinLearningYears)} 年`}</strong></div><div><span>其他會使用的語言</span><strong>${esc(metadata.otherLanguages?.join("、") || "無／未填寫")}</strong></div><div><span>語言背景分類</span><strong>${esc(metadata.languageBackground || "未填寫")}</strong></div>`; $(".detail-head", detail).after(metadataPanel);
   $$('[data-star]', detail).forEach(button => { const icon = $(".star", button); const star = project().stars.find(item => item.color === button.dataset.star); if (icon && star) icon.style.color = starHex(star); });
   $(".alias-input", detail).oninput = event => { const next = event.target.value.trim(); if (!next) return; sample.alias = next; const heading = detail.previousElementSibling?.querySelector("h3"); if (heading) heading.textContent = `${sample.alias} · ${sample.eligibility}`; toast("研究化名已同步"); };
   $(".claim", detail).onclick = () => { sample.assignee = researcher; sample.analysisStatus = "in_progress"; sample.changes.push(nowChange(`${researcher} 開始分析`)); renderSamples(); toast(`已指派給 ${researcher}`); };

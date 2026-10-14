@@ -142,7 +142,8 @@ async function adminSubmissions(request, env, email) {
     SELECT s.id, s.study_id, s.study_version, s.status, s.age_group, s.biological_sex,
       s.nationality, s.language_background, s.first_language, s.second_languages_json,
       s.mandarin_learning_years, s.created_at, s.completed_at,
-      r.eligibility_status, r.reviewed_at
+      r.eligibility_status, r.reviewed_at,
+      COALESCE((SELECT SUM(tr.audio_bytes) FROM task_recordings tr WHERE tr.submission_id = s.id), 0) AS audio_bytes
     FROM submissions s LEFT JOIN submission_reviews r ON r.submission_id = s.id
     ${condition} ORDER BY s.created_at DESC LIMIT 200
   `);

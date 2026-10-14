@@ -157,6 +157,17 @@ test("researcher and participant ports use fixed product branding and an interac
   assert.match(css, /width:18px!important/);
 });
 
+test("sample detail exposes permitted participant background metadata from server submissions", async () => {
+  const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../public/admin/project-mock.css", import.meta.url), "utf8");
+  assert.match(script, /mergeServerSubmissions/);
+  assert.match(script, /年齡區間/);
+  assert.match(script, /第一語言/);
+  assert.match(script, /其他會使用的語言/);
+  assert.match(script, /本專案未蒐集/);
+  assert.match(css, /participant-metadata/);
+});
+
 test("sample assignments use the protected signed-in owner instead of a hard-coded researcher name", async () => {
   const html = await readFile(new URL("../public/admin/project-mock.html", import.meta.url), "utf8");
   const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
