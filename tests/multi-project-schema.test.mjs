@@ -70,6 +70,17 @@ test("researcher mock page exposes the confirmed project workflows", async () =>
   assert.doesNotMatch(html, /多重偏誤/);
 });
 
+test("researcher workspace uses a formal projects route and redirects legacy mock URLs", async () => {
+  const worker = await readFile(new URL("../worker/src/index.js", import.meta.url), "utf8");
+  const config = await readFile(new URL("../wrangler.admin.toml", import.meta.url), "utf8");
+
+  assert.match(worker, /projectsUrl\.pathname = "\/admin\/projects"/);
+  assert.match(worker, /Response\.redirect\(projectsUrl\.toString\(\), 308\)/);
+  assert.match(worker, /requestUrl\.pathname === "\/admin\/projects"/);
+  assert.match(config, /"\/admin\/projects"/);
+  assert.match(config, /"\/admin\/project-mock"/);
+});
+
 test("capacity and trash mock expose synchronized bulk workflows", async () => {
   const html = await readFile(new URL("../public/admin/project-mock.html", import.meta.url), "utf8");
   const script = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");

@@ -461,7 +461,12 @@ async function finalizeSubmission(env, submissionId) {
 export default {
   async fetch(request, env) {
     const requestUrl = new URL(request.url);
-    if (requestUrl.pathname === "/admin" || requestUrl.pathname === "/admin/") {
+    if (["/admin", "/admin/", "/admin/project-mock", "/admin/project-mock.html"].includes(requestUrl.pathname)) {
+      const projectsUrl = new URL(request.url);
+      projectsUrl.pathname = "/admin/projects";
+      return Response.redirect(projectsUrl.toString(), 308);
+    }
+    if (requestUrl.pathname === "/admin/projects" || requestUrl.pathname === "/admin/projects/") {
       requestUrl.pathname = "/admin/project-mock.html";
       let asset = await env.ASSETS.fetch(new Request(requestUrl, request));
       if (asset.status >= 300 && asset.status < 400 && asset.headers.get("Location")) {

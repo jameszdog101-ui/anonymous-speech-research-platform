@@ -18,4 +18,12 @@ bucket_name = "anonymous-speech-audio-staging"
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/admin/api/*", "/admin", "/admin/"]
+run_worker_first = [
+  "/admin/api/*",
+  "/admin",
+  "/admin/",
+  "/admin/projects",
+  "/admin/projects/",
+  "/admin/project-mock",
+  "/admin/project-mock.html"
+]

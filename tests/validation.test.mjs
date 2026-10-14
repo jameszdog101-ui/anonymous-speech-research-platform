@@ -255,7 +255,7 @@ test("redesigned researcher workspace persists to D1 and stores project stimuli 
   assert.match(worker, /admin-workspace/);
   assert.match(worker, /admin_workspaces/);
   assert.match(worker, /upload_project_task_audio/);
-  assert.match(worker, /requestUrl\.pathname === "\/admin\/"/);
+  assert.match(worker, /requestUrl\.pathname === "\/admin\/projects"/);
   assert.match(worker, /isOwner\(env, email\)/);
   assert.match(portal, /bootstrapWorkspace\(\)/);
   assert.match(portal, /uploadWorkspaceTaskAudio/);
@@ -279,7 +279,7 @@ test("researcher portal deploys separately from the public participant API", asy
   const config = await readFile(new URL("../wrangler.admin.toml", import.meta.url), "utf8");
   assert.match(config, /name = "anonymous-speech-platform-admin"/);
   assert.match(config, /ADMIN_API_ENABLED = "true"/);
-  assert.match(config, /run_worker_first = \["\/admin\/api\/\*"/);
+  assert.match(config, /run_worker_first = \[\s*"\/admin\/api\/\*"/);
   assert.doesNotMatch(config, /PROJECT_OWNER_EMAIL|jameszdog101@gmail\.com/);
 });
 
