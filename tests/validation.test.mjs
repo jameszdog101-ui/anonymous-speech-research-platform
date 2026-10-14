@@ -248,6 +248,20 @@ test("researcher portal requires Access identity and audits sensitive actions", 
   assert.match(schema, /CREATE TABLE IF NOT EXISTS study_publications/);
 });
 
+test("redesigned researcher workspace persists to D1 and stores project stimuli in R2", async () => {
+  const worker = await readFile(new URL("../worker/src/index.js", import.meta.url), "utf8");
+  const portal = await readFile(new URL("../public/admin/project-mock.js", import.meta.url), "utf8");
+  const migration = await readFile(new URL("../worker/migrations/0006_admin_workspace.sql", import.meta.url), "utf8");
+  assert.match(worker, /admin-workspace/);
+  assert.match(worker, /admin_workspaces/);
+  assert.match(worker, /upload_project_task_audio/);
+  assert.match(worker, /requestUrl\.pathname === "\/admin\/"/);
+  assert.match(worker, /isOwner\(env, email\)/);
+  assert.match(portal, /bootstrapWorkspace\(\)/);
+  assert.match(portal, /uploadWorkspaceTaskAudio/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS admin_workspaces/);
+});
+
 test("study collection has a server-enforced cap and manual control", async () => {
   const schema = await readFile(new URL("../worker/schema.sql", import.meta.url), "utf8");
   const worker = await readFile(new URL("../worker/src/index.js", import.meta.url), "utf8");
@@ -265,7 +279,7 @@ test("researcher portal deploys separately from the public participant API", asy
   const config = await readFile(new URL("../wrangler.admin.toml", import.meta.url), "utf8");
   assert.match(config, /name = "anonymous-speech-platform-admin"/);
   assert.match(config, /ADMIN_API_ENABLED = "true"/);
-  assert.match(config, /run_worker_first = \["\/admin\/api\/\*"\]/);
+  assert.match(config, /run_worker_first = \["\/admin\/api\/\*"/);
   assert.doesNotMatch(config, /PROJECT_OWNER_EMAIL|jameszdog101@gmail\.com/);
 });
 

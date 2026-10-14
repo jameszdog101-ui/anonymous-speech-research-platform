@@ -117,6 +117,10 @@ let trashItems = [
 function trashItem(id, projectId, alias, bytes, deletedAt, daysLeft) { return { id, projectId, alias, bytes, deletedAt, daysLeft, kind: "sample" }; }
 
 const WORKSPACE_STORAGE_KEY = "researcher-project-workspace-v8";
+const WORKSPACE_API = "./api/workspace";
+let workspaceConnected = false;
+let workspaceRevision = 0;
+let workspaceSaveTimer;
 try {
   const savedWorkspace = JSON.parse(localStorage.getItem(WORKSPACE_STORAGE_KEY) || "null");
   if (savedWorkspace?.projects?.length) projects = savedWorkspace.projects;
@@ -127,7 +131,62 @@ try {
 }
 function persistWorkspace() {
   const replacer = (key, value) => key === "objectUrl" ? undefined : typeof value === "string" && value.startsWith("blob:") ? "" : value;
-  localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify({ projects, samples, trashItems }, replacer));
+  const serialized = JSON.stringify({ projects, samples, trashItems }, replacer);
+  localStorage.setItem(WORKSPACE_STORAGE_KEY, serialized);
+  if (!workspaceConnected) return;
+  clearTimeout(workspaceSaveTimer);
+  workspaceSaveTimer = setTimeout(() => saveWorkspaceOnline(serialized), 500);
+}
+
+async function saveWorkspaceOnline(serialized = null) {
+  const body = serialized || JSON.stringify({ projects, samples, trashItems }, (key, value) => key === "objectUrl" ? undefined : typeof value === "string" && value.startsWith("blob:") ? "" : value);
+  const response = await fetch(WORKSPACE_API, { method: "PUT", headers: { "Content-Type": "application/json" }, body });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) { workspaceConnected = false; toast(`雲端儲存失敗：${data.error || response.status}`); return; }
+  workspaceRevision = data.revision;
+  const saveState = $("#project-save-state");
+  if (saveState) saveState.textContent = `已同步至 D1 · 第 ${workspaceRevision} 版`;
+}
+
+function protectWorkspaceOwner(identity) {
+  if (!identity) return;
+  projects.forEach(item => item.members?.filter(member => member.owner).forEach(member => { member.email = identity; member.owner = true; member.admin = true; member.permissions = [...allPermissions]; }));
+}
+
+async function bootstrapWorkspace() {
+  try {
+    const response = await fetch(WORKSPACE_API, { headers: { Accept: "application/json" } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    if (data.workspace) {
+      projects = data.workspace.projects;
+      samples = data.workspace.samples;
+      trashItems = data.workspace.trashItems;
+      workspaceRevision = Number(data.revision || 0);
+    }
+    protectWorkspaceOwner(data.identity);
+    const canWrite = Boolean(data.is_owner);
+    workspaceConnected = false;
+    renderAll(); renderCreateStep();
+    toast(data.workspace ? `已連線 D1 工作區 · 第 ${workspaceRevision} 版` : "正在建立正式 D1 工作區");
+    workspaceConnected = canWrite;
+    if (!data.workspace && canWrite) await saveWorkspaceOnline();
+  } catch (error) {
+    workspaceConnected = false;
+    renderAll(); renderCreateStep();
+    toast(`目前使用本機備援：${error.message}`);
+  }
+}
+
+async function uploadWorkspaceTaskAudio(file, task, block) {
+  const item = project();
+  const endpoint = `${WORKSPACE_API}/projects/${encodeURIComponent(item.id)}/tasks/${encodeURIComponent(task.id)}/audio`;
+  const response = await fetch(endpoint, { method: "PUT", headers: { "Content-Type": file.type || (file.name.toLowerCase().endsWith(".wav") ? "audio/wav" : "video/mp4") }, body: file });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+  task.audio = file.name; task.src = data.url; task.fileSize = data.bytes; task.objectUrl = null;
+  if (block) { syncTaskToBlock(task, block); block.fileSize = data.bytes; }
+  persistWorkspace();
 }
 
 const state = { projectId: "p1", selectedSampleId: null, selectedTaskId: null, samplePage: 1, selectedMemberEmail: null, createStep: 0, createVoicePlan: defaultPlan(), trashSelected: new Set(), capacitySyncedAt: "2026/10/8 10:15" };
@@ -253,7 +312,7 @@ function renderTaskEditor(task) {
   $(".task-remove", editor).onclick = () => confirmAction("移除題目", `移除「${task.title}」及其題目音檔設定？`, null, () => { removeSynchronizedTask(project(), task.id); state.selectedTaskId = null; renderTasks(); if (project().selectedPage === "tasks") renderDesigner(); toast("題目已從兩個分頁移除"); });
   $(".task-cancel", editor).onclick = () => { state.selectedTaskId = null; renderTasks(); };
   $(".task-save", editor).onclick = () => { task.title = $(".task-title", editor).value.trim() || task.title; task.instructions = $(".task-instructions", editor).value; task.published = $(".task-published", editor).checked; const block = project().pages.find(page => page.key === "tasks")?.blocks.find(entry => entry.taskId === task.id); if (block) syncTaskToBlock(task, block); state.selectedTaskId = null; renderTasks(); if (project().selectedPage === "tasks") renderDesigner(); toast(`題目已同步並設為${task.published ? "啟用中" : "已停用"}`); };
-  $(".task-media", editor).onchange = event => { const selected = event.target.files[0]; if (!selected) return; const error = validateMediaFile(selected); if (error) { event.target.value = ""; toast(error); return; } if (task.objectUrl) URL.revokeObjectURL(task.objectUrl); task.audio = selected.name; task.objectUrl = URL.createObjectURL(selected); task.src = task.objectUrl; const block = project().pages.find(page => page.key === "tasks")?.blocks.find(entry => entry.taskId === task.id); if (block) syncTaskToBlock(task, block); renderTasks(); toast("題目音檔已同步加入兩個分頁的草稿"); };
+  $(".task-media", editor).onchange = async event => { const selected = event.target.files[0]; if (!selected) return; const error = validateMediaFile(selected); if (error) { event.target.value = ""; toast(error); return; } const block = project().pages.find(page => page.key === "tasks")?.blocks.find(entry => entry.taskId === task.id); try { await uploadWorkspaceTaskAudio(selected, task, block); renderTasks(); toast("題目音檔已上傳 R2 並同步至兩個分頁"); } catch (uploadError) { event.target.value = ""; toast(`音檔上傳失敗：${uploadError.message}`); } };
   return editor;
 }
 function renderNotes() { const notes = project().notes; $("#division-note").value = notes.division; $("#analysis-note").value = notes.analysis; $("#note-history").innerHTML = notes.history.map(row => `<li>${esc(row)}</li>`).join(""); }
@@ -316,7 +375,7 @@ function renderBlockEditor() {
     const row = document.createElement("div"); const configurable = ["select_field", "single_choice", "multiple_choice"].includes(block.type); const media = ["device_audio", "speech_task"].includes(block.type); const debriefing = block.type === "debriefing"; row.className = "block-row";
     row.innerHTML = `<span>⋮⋮</span><input class="block-label-input" value="${esc(block.label)}"><span>${blockTypeLabel(block.type)}</span><div class="block-actions"><button type="button" title="上移">↑</button><button type="button" title="下移">↓</button><button type="button" title="複製">⧉</button><button type="button" title="刪除" class="text-danger">×</button></div><div class="block-config">${block.type !== "divider" ? `<label><input class="required-toggle" type="checkbox" ${block.required ? "checked" : ""}>必填</label>` : ""}<label>說明／註解<input class="block-note" value="${esc(block.note || "")}" placeholder="可留白"></label>${configurable ? `<label>選項（每行一個）<textarea class="block-options" rows="3">${esc(block.options || "選項一\n選項二")}</textarea></label>` : ""}${media ? `<label>題目媒體 MP4／WAV<input class="block-media" type="file" accept=".mp4,.wav,audio/mp4,audio/wav,video/mp4"><small>${esc(block.fileName || "尚未選擇檔案")}</small></label>` : ""}${debriefing ? `<label class="debriefing-editor">事後說明完整內容<textarea class="debriefing-content" rows="7">${esc(project().governance.debriefing || "")}</textarea><small>此內容與「研究規範與同意」、右側預覽及完整受試者預覽使用同一版本。</small></label>` : ""}</div>`;
     const syncSpeechBlock = () => { const task = block.type === "speech_task" ? taskForBlock(project(), block) : null; if (task) syncBlockToTask(block, task); };
-    $(".block-label-input", row).oninput = event => { block.label = event.target.value; syncSpeechBlock(); renderParticipantPreview(); }; const note = $(".block-note", row); if (note) note.oninput = event => { block.note = event.target.value; syncSpeechBlock(); renderParticipantPreview(); }; const required = $(".required-toggle", row); if (required) required.onchange = event => block.required = event.target.checked; const options = $(".block-options", row); if (options) options.oninput = event => { block.options = event.target.value; renderParticipantPreview(); }; const debriefingContent = $(".debriefing-content", row); if (debriefingContent) debriefingContent.oninput = event => { project().governance.debriefing = event.target.value; const governanceField = $("#project-design-form").elements.debriefing; if (governanceField) governanceField.value = event.target.value; $("#project-save-state").textContent = "尚未儲存的變更"; renderParticipantPreview(); renderPublishAudit(); }; const file = $(".block-media", row); if (file) file.onchange = () => { const selected = file.files[0]; if (!selected) return; const error = validateMediaFile(selected); if (error) { file.value = ""; toast(error); return; } if (block.objectUrl) URL.revokeObjectURL(block.objectUrl); block.fileName = selected.name; block.fileSize = selected.size; block.objectUrl = URL.createObjectURL(selected); block.src = block.objectUrl; syncSpeechBlock(); renderBlockEditor(); renderParticipantPreview(); toast(block.type === "speech_task" ? "題目音檔已同步至題目與音檔分頁" : "媒體已加入專案草稿，尚未發布"); };
+    $(".block-label-input", row).oninput = event => { block.label = event.target.value; syncSpeechBlock(); renderParticipantPreview(); }; const note = $(".block-note", row); if (note) note.oninput = event => { block.note = event.target.value; syncSpeechBlock(); renderParticipantPreview(); }; const required = $(".required-toggle", row); if (required) required.onchange = event => block.required = event.target.checked; const options = $(".block-options", row); if (options) options.oninput = event => { block.options = event.target.value; renderParticipantPreview(); }; const debriefingContent = $(".debriefing-content", row); if (debriefingContent) debriefingContent.oninput = event => { project().governance.debriefing = event.target.value; const governanceField = $("#project-design-form").elements.debriefing; if (governanceField) governanceField.value = event.target.value; $("#project-save-state").textContent = "尚未儲存的變更"; renderParticipantPreview(); renderPublishAudit(); }; const file = $(".block-media", row); if (file) file.onchange = async () => { const selected = file.files[0]; if (!selected) return; const error = validateMediaFile(selected); if (error) { file.value = ""; toast(error); return; } if (block.type === "speech_task") { const task = taskForBlock(project(), block); try { await uploadWorkspaceTaskAudio(selected, task, block); renderBlockEditor(); renderParticipantPreview(); toast("題目音檔已上傳 R2 並同步至題目與音檔分頁"); } catch (uploadError) { file.value = ""; toast(`音檔上傳失敗：${uploadError.message}`); } return; } if (block.objectUrl) URL.revokeObjectURL(block.objectUrl); block.fileName = selected.name; block.fileSize = selected.size; block.objectUrl = URL.createObjectURL(selected); block.src = block.objectUrl; renderBlockEditor(); renderParticipantPreview(); toast("設備媒體已加入專案草稿；正式 R2 上傳端點尚待分離"); };
     const buttons = $$(".block-actions button", row); buttons[0].disabled = index === 0; buttons[0].onclick = () => moveBlock(index, -1); buttons[1].disabled = index === page.blocks.length - 1; buttons[1].onclick = () => moveBlock(index, 1); buttons[2].onclick = () => { const copy = { ...block, id: crypto.randomUUID(), objectUrl: null }; if (copy.type === "speech_task") { delete copy.taskId; copy.label = `${copy.label}（副本）`; page.blocks.splice(index + 1, 0, copy); createTaskFromBlock(project(), copy); } else page.blocks.splice(index + 1, 0, copy); renderBlockEditor(); renderParticipantPreview(); toast(copy.type === "speech_task" ? "題目已複製並同步" : "欄位已複製"); }; buttons[3].onclick = () => { page.blocks.splice(index, 1); if (block.type === "speech_task") { removeSynchronizedTask(project(), block.taskId); if (state.selectedTaskId === block.taskId) state.selectedTaskId = null; } renderBlockEditor(); renderParticipantPreview(); toast(block.type === "speech_task" ? "題目已從兩個分頁移除" : "欄位已從草稿移除"); }; root.append(row);
   });
 }
@@ -450,5 +509,4 @@ $("#restore-selected").onclick = () => restoreTrash(new Set(state.trashSelected)
 $("#delete-selected").onclick = () => { const ids = new Set(state.trashSelected); confirmAction("永久刪除所選項目", `永久刪除 ${ids.size} 項後無法還原。`, null, () => deleteTrash(ids)); };
 $("#empty-trash").onclick = () => confirmAction("永久清空垃圾桶", `永久刪除全部 ${trashItems.length} 項後無法還原。`, "永久清空", () => deleteTrash(new Set(trashItems.map(item => item.id))));
 
-renderAll();
-renderCreateStep();
+bootstrapWorkspace();

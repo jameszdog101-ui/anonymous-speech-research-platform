@@ -9,6 +9,7 @@ FRONTEND_ORIGIN = "https://anonymous-speech-research-staging.pages.dev"
 binding = "DB"
 database_name = "anonymous-speech-research-staging"
 database_id = "629bd064-2df8-413c-bcc0-6f46dfe3bdd3"
+migrations_dir = "worker/migrations"
 
 [[r2_buckets]]
 binding = "AUDIO"

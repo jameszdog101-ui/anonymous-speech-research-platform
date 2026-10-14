@@ -9,6 +9,7 @@ ADMIN_API_ENABLED = "true"
 binding = "DB"
 database_name = "anonymous-speech-research-staging"
 database_id = "629bd064-2df8-413c-bcc0-6f46dfe3bdd3"
+migrations_dir = "worker/migrations"
 
 [[r2_buckets]]
 binding = "AUDIO"
@@ -16,4 +17,5 @@ bucket_name = "anonymous-speech-audio-staging"
 
 [assets]
 directory = "./public"
-run_worker_first = ["/admin/api/*"]
+binding = "ASSETS"
+run_worker_first = ["/admin/api/*", "/admin", "/admin/"]

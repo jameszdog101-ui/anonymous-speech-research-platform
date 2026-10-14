@@ -28,6 +28,9 @@ function corsHeaders(request, env) {
 }
 
 function route(pathname) {
+  if (pathname === "/admin/api/workspace") return { name: "admin-workspace" };
+  const workspaceTaskAudio = pathname.match(/^\/admin\/api\/workspace\/projects\/([^/]+)\/tasks\/([^/]+)\/audio$/);
+  if (workspaceTaskAudio) return { name: "admin-workspace-task-audio", projectId: decodeURIComponent(workspaceTaskAudio[1]), taskId: decodeURIComponent(workspaceTaskAudio[2]) };
   if (pathname === "/admin/api/study-control") return { name: "admin-study-control" };
   if (pathname === "/admin/api/researchers/revoke-all") return { name: "admin-researchers-revoke-all" };
   if (pathname === "/admin/api/researchers") return { name: "admin-researchers" };
@@ -216,6 +219,66 @@ async function adminExport(env, email) {
 function ownerEmail(env) { return String(env.PROJECT_OWNER_EMAIL || "").trim().toLowerCase(); }
 function isOwner(env, email) { return email === ownerEmail(env); }
 
+function validateWorkspace(payload, env) {
+  if (!payload || !Array.isArray(payload.projects) || !Array.isArray(payload.samples) || !Array.isArray(payload.trashItems)) return "工作區資料格式不正確。";
+  if (!payload.projects.length || payload.projects.length > 100) return "專案數量必須介於 1 至 100。";
+  const owner = ownerEmail(env);
+  const ids = new Set();
+  for (const project of payload.projects) {
+    if (!project?.id || !project?.name || !project?.slug || ids.has(project.id)) return "專案識別資料不正確或重複。";
+    ids.add(project.id);
+    if (!Array.isArray(project.members) || !Array.isArray(project.tasks) || !Array.isArray(project.pages)) return "專案內容格式不完整。";
+    if (owner && !project.members.some((member) => member.owner && String(member.email || "").toLowerCase() === owner)) return "最高權限擁有者資料不可移除或變更。";
+    if (project.tasks.length > 500 || project.pages.length > 100) return "專案題目或頁面數量超過系統上限。";
+  }
+  if (payload.samples.length > 100000 || payload.trashItems.length > 100000) return "樣本或垃圾桶項目超過系統上限。";
+  return null;
+}
+
+async function adminWorkspace(request, env, email) {
+  if (request.method === "GET") {
+    const row = await env.DB.prepare("SELECT configuration_json, revision, updated_by, updated_at FROM admin_workspaces WHERE workspace_key = 'default'").first();
+    await audit(env, email, "view_admin_workspace");
+    if (!row) return json({ workspace: null, revision: 0, identity: email, is_owner: isOwner(env, email) });
+    return json({ workspace: JSON.parse(row.configuration_json), revision: row.revision, updated_by: row.updated_by, updated_at: row.updated_at, identity: email, is_owner: isOwner(env, email) });
+  }
+  if (!isOwner(env, email)) return json({ error: "目前只有最高權限擁有者可以儲存完整專案工作區。" }, 403);
+  const text = await request.text();
+  if (!text || new TextEncoder().encode(text).byteLength > 5_000_000) return json({ error: "工作區資料為空或超過 5 MB。" }, 413);
+  let payload;
+  try { payload = JSON.parse(text); } catch { return json({ error: "工作區 JSON 格式不正確。" }, 400); }
+  const error = validateWorkspace(payload, env);
+  if (error) return json({ error }, 400);
+  const current = await env.DB.prepare("SELECT revision FROM admin_workspaces WHERE workspace_key = 'default'").first();
+  const revision = Number(current?.revision || 0) + 1;
+  const now = new Date().toISOString();
+  await env.DB.prepare("INSERT INTO admin_workspaces (workspace_key, configuration_json, revision, updated_by, updated_at) VALUES ('default', ?, ?, ?, ?) ON CONFLICT(workspace_key) DO UPDATE SET configuration_json=excluded.configuration_json, revision=excluded.revision, updated_by=excluded.updated_by, updated_at=excluded.updated_at")
+    .bind(JSON.stringify(payload), revision, email, now).run();
+  await audit(env, email, "save_admin_workspace");
+  return json({ ok: true, revision, updated_at: now });
+}
+
+function validWorkspaceId(value) { return /^[a-zA-Z0-9_-]{1,100}$/.test(value); }
+
+async function adminWorkspaceTaskAudio(request, env, email, projectId, taskId) {
+  if (!validWorkspaceId(projectId) || !validWorkspaceId(taskId)) return json({ error: "專案或題目識別碼格式不正確。" }, 400);
+  const key = `projects/${projectId}/stimuli/${taskId}`;
+  if (request.method === "GET") {
+    const object = await env.AUDIO.get(key);
+    if (!object) return json({ error: "找不到題目音檔。" }, 404);
+    await audit(env, email, "play_project_task_audio", projectId, taskId);
+    return new Response(object.body, { headers: { "Content-Type": object.httpMetadata?.contentType || "application/octet-stream", "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
+  }
+  if (!isOwner(env, email)) return json({ error: "目前只有最高權限擁有者可以上傳題目音檔。" }, 403);
+  const type = request.headers.get("Content-Type")?.split(";")[0];
+  if (!["audio/wav", "audio/x-wav", "audio/mp4", "video/mp4"].includes(type)) return json({ error: "題目音檔只接受 WAV 或 MP4。" }, 400);
+  const media = await request.arrayBuffer();
+  if (!media.byteLength || media.byteLength > 50 * 1024 * 1024) return json({ error: "題目音檔為空或超過 50 MB。" }, 400);
+  await env.AUDIO.put(key, media, { httpMetadata: { contentType: type }, customMetadata: { projectId, taskId, uploadedBy: email } });
+  await audit(env, email, "upload_project_task_audio", projectId, taskId);
+  return json({ ok: true, bytes: media.byteLength, url: `/admin/api/workspace/projects/${encodeURIComponent(projectId)}/tasks/${encodeURIComponent(taskId)}/audio` });
+}
+
 async function adminResearchers(env, email) {
   if (!isOwner(env, email)) return json({ error: "只有最高權限擁有者可以管理研究者。" }, 403);
   const result = await env.DB.prepare("SELECT email, role, status, created_at, updated_at FROM researchers ORDER BY email").all();
@@ -396,9 +459,19 @@ async function finalizeSubmission(env, submissionId) {
 
 export default {
   async fetch(request, env) {
+    const requestUrl = new URL(request.url);
+    if (requestUrl.pathname === "/admin" || requestUrl.pathname === "/admin/") {
+      requestUrl.pathname = "/admin/project-mock.html";
+      let asset = await env.ASSETS.fetch(new Request(requestUrl, request));
+      if (asset.status >= 300 && asset.status < 400 && asset.headers.get("Location")) {
+        const cleanUrl = new URL(asset.headers.get("Location"), request.url);
+        asset = await env.ASSETS.fetch(new Request(cleanUrl, request));
+      }
+      return asset;
+    }
     const cors = corsHeaders(request, env);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    const currentRoute = route(new URL(request.url).pathname);
+    const currentRoute = route(requestUrl.pathname);
     let response;
     try {
       if (currentRoute.name.startsWith("admin-")) {
@@ -408,6 +481,8 @@ export default {
         else {
         const email = await researcherIdentity(request, env);
         if (!email) response = json({ error: "未授權的研究人員帳號。" }, 401);
+        else if (currentRoute.name === "admin-workspace" && ["GET", "PUT"].includes(request.method)) response = await adminWorkspace(request, env, email);
+        else if (currentRoute.name === "admin-workspace-task-audio" && ["GET", "PUT"].includes(request.method)) response = await adminWorkspaceTaskAudio(request, env, email, currentRoute.projectId, currentRoute.taskId);
         else if (currentRoute.name === "admin-summary" && request.method === "GET") response = await adminSummary(env, email);
         else if (currentRoute.name === "admin-submissions" && request.method === "GET") response = await adminSubmissions(request, env, email);
         else if (currentRoute.name === "admin-submission" && request.method === "GET") response = await adminSubmission(env, email, currentRoute.submissionId);
