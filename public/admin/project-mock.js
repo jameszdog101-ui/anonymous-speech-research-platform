@@ -1,3 +1,5 @@
+import { defaultPlan, mountPlanner, planIssues, planManifest, MODELS, OUTPUTS } from "./voice-planner.js";
+
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const GB = 1024 ** 3;
@@ -82,6 +84,7 @@ let projects = [
 function makeProject(id, name, slug, status, activeBytes, trashBytes, sampleCount, maxSubmissions) {
   return {
     id, name, slug, status, activeBytes, trashBytes, sampleCount, maxSubmissions, capacityLimit: 3 * GB,
+    voicePlan: defaultPlan(),
     version: status === "draft" ? 0 : 4, publishedAt: status === "draft" ? "尚未發布" : "2026/10/7 16:42",
     footer: "去識別化語音語言研究平台｜研究資料僅依知情同意與核准計畫使用。", pages: defaultPages(), selectedPage: "governance", governance: defaultGovernance(),
     tags: [{ label: "語音偏誤", used: 34, reason: true }, { label: "句法偏誤", used: 21, reason: true }, { label: "語用偏誤", used: 12, reason: true }],
@@ -126,7 +129,7 @@ function persistWorkspace() {
   localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify({ projects, samples, trashItems }, replacer));
 }
 
-const state = { projectId: "p1", selectedSampleId: null, selectedTaskId: null, samplePage: 1, selectedMemberEmail: null, createStep: 0, trashSelected: new Set(), capacitySyncedAt: "2026/10/8 10:15" };
+const state = { projectId: "p1", selectedSampleId: null, selectedTaskId: null, samplePage: 1, selectedMemberEmail: null, createStep: 0, createVoicePlan: defaultPlan(), trashSelected: new Set(), capacitySyncedAt: "2026/10/8 10:15" };
 const project = () => projects.find(item => item.id === state.projectId && !item.trashed) || projects.find(item => !item.trashed);
 const projectById = id => projects.find(item => item.id === id);
 const currentResearcherMember = (item = project()) => item?.members.find(member => member.owner) || null;
@@ -270,6 +273,16 @@ function renderMemberEditor() {
 const governanceFieldNames = ["publicTitle", "officialStudyName", "institution", "principalInvestigator", "contactEmail", "participationTime", "purpose", "eligibilityCriteria", "minimumAge", "consentVersion", "retentionPeriod", "retentionDisposal", "dataUse", "risks", "benefits", "withdrawalPolicy", "ineligiblePolicy", "duplicatePolicy", "collectNationality", "nationalityPurpose", "transformField", "verifiedConsentLanguages", "ethicsStatus", "ethicsReference", "debriefing"];
 function hydrateProject(item) { item.governance = { ...defaultGovernance(), ...(item.governance || {}) }; if (item.footer === "隱私保護語音研究平台｜研究資料僅依知情同意與核准計畫使用。") item.footer = "去識別化語音語言研究平台｜研究資料僅依知情同意與核准計畫使用。"; item.selectedPage ||= "governance"; return item; }
 function renderDesigner() {
+  const voiceItem = project();
+  voiceItem.voicePlan ||= defaultPlan();
+  let plannerRoot = $("#project-voice-planner");
+  if (!plannerRoot) {
+    plannerRoot = document.createElement("section");
+    plannerRoot.id = "project-voice-planner";
+    plannerRoot.className = "voice-project-settings";
+    $("#governance-fields").before(plannerRoot);
+  }
+  mountPlanner(plannerRoot, voiceItem.voicePlan, () => { persistWorkspace(); renderPublishAudit(); });
   const item = hydrateProject(project()); const form = $("#project-design-form"); form.elements.name.value = item.name; form.elements.status.value = item.status; form.elements.maxSubmissions.value = item.maxSubmissions; form.elements.slug.value = item.slug;
   governanceFieldNames.forEach(name => { if (form.elements[name]) form.elements[name].value = item.governance[name] ?? ""; });
   const governanceSelected = item.selectedPage === "governance"; $("#open-governance").classList.toggle("active", governanceSelected); $("#governance-fields").hidden = !governanceSelected; $("#page-content-fields").hidden = governanceSelected;
@@ -297,6 +310,7 @@ function previewBlock(block, item = project()) { const note = block.note ? `<sma
 function choiceOptions(block) { return (block.options || "選項一\n選項二").split("\n").map(option => option.trim()).filter(Boolean); }
 
 function publishAudit(item = project()) {
+  const voiceProblems = planIssues(item.voicePlan || defaultPlan()).map(text => ({ level: "error", text }));
   const g = hydrateProject(item).governance; const problems = []; const required = { publicTitle: "平台公開名稱", officialStudyName: "正式研究名稱", institution: "研究機構", principalInvestigator: "研究主持人", contactEmail: "研究聯絡 Email", participationTime: "預計參與時間", purpose: "研究目的", eligibilityCriteria: "納入條件", consentVersion: "知情同意版本", retentionPeriod: "資料保存期限", retentionDisposal: "期限屆滿處理方式", dataUse: "資料用途與存取者", risks: "可能風險", benefits: "可能利益", withdrawalPolicy: "撤回規則", ineligiblePolicy: "資格不符資料處理", duplicatePolicy: "重複參與處理", verifiedConsentLanguages: "人工確認的同意語言", debriefing: "事後說明" };
   Object.entries(required).forEach(([key, label]) => { if (!String(g[key] || "").trim()) problems.push({ level: "error", text: `${label}尚未填寫` }); });
   if (!/^\S+@\S+\.\S+$/.test(g.contactEmail || "")) problems.push({ level: "error", text: "研究聯絡 Email 格式不正確" });
@@ -316,7 +330,7 @@ function publishAudit(item = project()) {
   if (!item.tasks.some(task => task.published && task.src)) problems.push({ level: "error", text: "至少需要一題已啟用且有媒體的正式題目" });
   if (g.ethicsStatus !== "approved") problems.push({ level: "warning", text: "倫理審查尚未標示為已核准；公開頁不得宣稱研究已通過審查" });
   if (/請填寫|示範|example\./i.test([g.institution, g.principalInvestigator, g.contactEmail].join(" "))) problems.push({ level: "warning", text: "研究機構、主持人或聯絡方式仍含示範內容，正式招募前必須替換" });
-  return problems;
+  return [...problems, ...voiceProblems];
 }
 function renderPublishAudit() { const rows = publishAudit(); const errors = rows.filter(row => row.level === "error").length; $("#audit-summary").className = errors ? "audit-bad" : "audit-good"; $("#audit-summary").textContent = errors ? `${errors} 項阻擋發布` : "可建立發布快照"; $("#publish-audit-list").innerHTML = rows.length ? rows.map(row => `<li class="${row.level}">${row.level === "error" ? "必須修正" : "正式招募前確認"}：${esc(row.text)}</li>`).join("") : "<li class=\"pass\">必要研究資訊、資料規則與受試者頁檢查均已通過。</li>"; }
 function openFullPreview() { saveDesign(); const item = project(); localStorage.setItem("research-participant-preview-v1", JSON.stringify({ project: item, generatedAt: new Date().toISOString() })); window.open("./project-participant-preview.html", "_blank", "noopener"); }
@@ -336,9 +350,21 @@ function moveProjectToTrash(item) { item.trashed = true; item.status = "archived
 
 function renderCreateStep() {
   const names = ["basic", "content", "analysis", "review"]; const current = names[state.createStep]; $$(".create-step").forEach(step => step.classList.toggle("active", step.dataset.stepPanel === current)); $$(".create-steps button").forEach((button, index) => button.classList.toggle("active", index === state.createStep)); $("#create-prev").disabled = state.createStep === 0; $("#create-next").hidden = state.createStep === names.length - 1;
-  if (current === "review") { const form = $("#create-project-form"); $("#create-review").innerHTML = [["專案名稱", form.elements.name.value || "尚未填寫"], ["網址", form.elements.slug.value || "尚未填寫"], ["初始狀態", statusLabels[form.elements.status.value]], ["收錄上限", `${form.elements.maxSubmissions.value} 份`], ["容量警示", `${form.elements.capacityLimit.value} GB`]].map(([label, value]) => `<div><span>${label}</span><strong>${esc(value)}</strong></div>`).join(""); }
+  if (current === "analysis") {
+    let plannerRoot = $("#create-voice-planner");
+    if (!plannerRoot) {
+      plannerRoot = document.createElement("section");
+      plannerRoot.id = "create-voice-planner";
+      $("[data-step-panel=analysis]").append(plannerRoot);
+    }
+    mountPlanner(plannerRoot, state.createVoicePlan, () => {});
+  }
+  if (current === "review") {
+    const form = $("#create-project-form"); const selectedModel = MODELS.find(model => model.id === state.createVoicePlan.model);
+    $("#create-review").innerHTML = [["專案名稱", form.elements.name.value || "尚未填寫"], ["網址", form.elements.slug.value || "尚未填寫"], ["初始狀態", statusLabels[form.elements.status.value]], ["收錄上限", `${form.elements.maxSubmissions.value} 份`], ["容量警示", `${form.elements.capacityLimit.value} GB`], ["資料形式", OUTPUTS[state.createVoicePlan.output]], ["去識別化方案", selectedModel?.name || "尚未選擇"]].map(([label, value]) => `<div><span>${label}</span><strong>${esc(value)}</strong></div>`).join("");
+  }
 }
-function createProject(event) { event.preventDefault(); const form = event.currentTarget; if (!form.reportValidity()) return; if (!form.elements.confirm.checked) { toast("請先確認專案保護設定"); return; } const slug = form.elements.slug.value.trim(); if (projects.some(item => item.slug === slug && !item.trashed)) { toast("網址識別碼已存在"); return; } const item = makeProject(crypto.randomUUID(), form.elements.name.value.trim(), slug, form.elements.status.value, 0, 0, 0, Number(form.elements.maxSubmissions.value)); item.capacityLimit = Number(form.elements.capacityLimit.value) * GB; item.notes.analysis = form.elements.initialNote.value; item.tags = checkedValues("defaultTag").map(label => ({ label, used: 0, reason: true, active: true })); item.pages.find(page => page.key === "start").title = form.elements.startTitle.value; item.pages.find(page => page.key === "consent").title = form.elements.consentTitle.value; item.pages.find(page => page.key === "background").body = form.elements.backgroundText.value; item.pages.find(page => page.key === "device").body = form.elements.deviceText.value; item.pages.find(page => page.key === "complete").body = form.elements.completionText.value; item.footer = form.elements.footer.value; projects.push(item); state.projectId = item.id; form.reset(); state.createStep = 0; renderAll(); openProject(item.id); switchProjectPane("designer"); toast("研究專案已建立為可編輯版本"); }
+function createProject(event) { event.preventDefault(); const form = event.currentTarget; if (!form.reportValidity()) return; if (!form.elements.confirm.checked) { toast("請先確認專案保護設定"); return; } const slug = form.elements.slug.value.trim(); if (projects.some(item => item.slug === slug && !item.trashed)) { toast("網址識別碼已存在"); return; } const item = makeProject(crypto.randomUUID(), form.elements.name.value.trim(), slug, form.elements.status.value, 0, 0, 0, Number(form.elements.maxSubmissions.value)); item.capacityLimit = Number(form.elements.capacityLimit.value) * GB; item.voicePlan = structuredClone(state.createVoicePlan); item.notes.analysis = form.elements.initialNote.value; item.tags = checkedValues("defaultTag").map(label => ({ label, used: 0, reason: true, active: true })); item.pages.find(page => page.key === "start").title = form.elements.startTitle.value; item.pages.find(page => page.key === "consent").title = form.elements.consentTitle.value; item.pages.find(page => page.key === "background").body = form.elements.backgroundText.value; item.pages.find(page => page.key === "device").body = form.elements.deviceText.value; item.pages.find(page => page.key === "complete").body = form.elements.completionText.value; item.footer = form.elements.footer.value; projects.push(item); state.projectId = item.id; form.reset(); state.createStep = 0; state.createVoicePlan = defaultPlan(); renderAll(); openProject(item.id); switchProjectPane("designer"); toast("研究專案已建立為可編輯版本"); }
 
 function filteredTrash() { const value = $("#trash-project-filter").value; return trashItems.filter(item => value === "all" || item.projectId === value); }
 function renderTrash() {
@@ -385,7 +411,7 @@ $("#project-design-form").onsubmit = event => { event.preventDefault(); saveDesi
 $("#project-design-form").oninput = () => { $("#project-save-state").textContent = "尚未儲存的變更"; const form = $("#project-design-form"); const item = hydrateProject(project()); readGovernanceForm(item, form); const page = item.pages.find(row => row.key === item.selectedPage); if (page) { page.title = form.elements.pageTitle.value; page.body = form.elements.pageBody.value; item.footer = form.elements.footer.value; } renderParticipantPreview(); renderPublishAudit(); };
 $("#open-governance").onclick = () => { project().selectedPage = "governance"; renderDesigner(); };
 $("#preview-project").onclick = openFullPreview;
-$("#publish-project").onclick = () => { saveDesign(); const problems = publishAudit(); const errors = problems.filter(row => row.level === "error"); if (errors.length) { switchProjectPane("designer"); renderPublishAudit(); toast(`尚有 ${errors.length} 項必要條件未通過，未發布`); return; } project().version += 1; project().publishedAt = new Date().toLocaleString("zh-TW", { hour12: false }); project().publishedSnapshot = JSON.parse(JSON.stringify({ governance: project().governance, pages: project().pages, tasks: project().tasks, consentVersion: project().governance.consentVersion })); renderProject(); toast(`已建立第 ${project().version} 版不可變更發布快照`); };
+$("#publish-project").onclick = () => { saveDesign(); const problems = publishAudit(); const errors = problems.filter(row => row.level === "error"); if (errors.length) { switchProjectPane("designer"); renderPublishAudit(); toast(`尚有 ${errors.length} 項必要條件未通過，未發布`); return; } project().version += 1; project().publishedAt = new Date().toLocaleString("zh-TW", { hour12: false }); project().publishedSnapshot = JSON.parse(JSON.stringify({ governance: project().governance, pages: project().pages, tasks: project().tasks, consentVersion: project().governance.consentVersion, voicePlan: project().voicePlan, voiceManifest: planManifest(project().voicePlan) })); renderProject(); toast(`已建立第 ${project().version} 版不可變更發布快照`); };
 $("#add-page").onclick = () => { const item = project(); const key = `custom-${crypto.randomUUID()}`; item.pages.push({ key, label: `自訂頁面 ${item.pages.length - 5}`, title: "自訂頁面", body: "請輸入頁面說明。", blocks: [] }); item.selectedPage = key; renderDesigner(); };
 $("#delete-page").onclick = () => { const item = project(); const page = item.pages.find(entry => entry.key === item.selectedPage); if (!page?.key.startsWith("custom-")) return; confirmAction("刪除自訂頁面", `刪除「${page.label}」及頁面內所有欄位？`, null, () => { item.pages = item.pages.filter(entry => entry !== page); item.selectedPage = "start"; renderDesigner(); toast("自訂頁面已刪除"); }); };
 $("#add-block").onclick = () => { const page = project().pages.find(row => row.key === project().selectedPage); if (!page) { toast("請先選擇一個受試者頁面"); return; } const type = $("#block-type").value; page.blocks ||= []; const labels = { heading: "新標題", paragraph: "新的說明或註解", notice: "新的醒目說明", device_audio: "設備測試聲音", speech_task: `口說題目 ${page.blocks.filter(block => block.type === "speech_task").length + 1}`, consent: "我已閱讀並理解上述資訊，自願同意參與本研究。", debriefing: "研究事後說明", completion_download: "下載完成證明圖片", divider: "分隔線" }; page.blocks.push({ id: crypto.randomUUID(), type, label: labels[type] || "新欄位", options: ["select_field", "single_choice", "multiple_choice"].includes(type) ? "選項一\n選項二" : "", required: type === "consent" }); renderBlockEditor(); renderParticipantPreview(); renderPublishAudit(); toast("欄位已加入目前頁面草稿"); };
