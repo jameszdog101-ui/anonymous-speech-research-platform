@@ -56,7 +56,7 @@ function render() {
   const consent = page.key === "consent";
   document.querySelector("#governance-summary").hidden = !consent;
   document.querySelector("#governance-summary").innerHTML = consent ? governanceCards() : "";
-  document.querySelector("#page-blocks").innerHTML = (page.blocks || []).map(renderBlock).join("");
+  document.querySelector("#page-blocks").innerHTML = (page.blocks || []).filter(block => block.type !== "speech_task" || block.published !== false).map(renderBlock).join("");
   document.querySelector("#previous-page").disabled = pageIndex === 0;
   const next = document.querySelector("#next-page");
   next.textContent = pageIndex === pages.length - 1 ? "結束預覽" : "下一步";
